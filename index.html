@@ -14,30 +14,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0C0B09;
-  --bg2: #111110;
-  --bg-card: #17160F;
-  --bg-card-h: #1E1D16;
-  --text: #E8E2D6;
-  --dim: #9E9787;
-  --faint: #5E584D;
-  --accent: #B8860B;
-  --accent-d: #8A6508;
-  --red: #A63D3D;
-  --green: #4DA882;
-  --blue: #5A94D4;
-  --lav: #8B7FD0;
-  --border: #272520;
-  --border2: #353228;
+  --bg: #08070A;
+  --bg2: #0E0D10;
+  --bg-card: #131218;
+  --bg-card-h: #1A1920;
+  --text: #F5F2EC;
+  --dim: #C4BDB0;
+  --faint: #807A6E;
+  --accent: #D4A017;
+  --accent-d: #B8860B;
+  --red: #D45454;
+  --green: #5CC99A;
+  --blue: #6AABEF;
+  --lav: #A99AE8;
+  --border: #2D2B33;
+  --border2: #403D48;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#353228 #0C0B09}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#403D48 #08070A}
 body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-weight:300;line-height:1.7;font-size:16px;-webkit-font-smoothing:antialiased}
 ::selection{background:var(--accent);color:var(--bg)}
 a{color:inherit;text-decoration:none}
 
 /* ─── NAV ─── */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;height:50px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;background:#0C0B09E8;backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:transform .3s}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:50px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;background:#08070AE8;backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:transform .3s}
 nav.hide{transform:translateY(-100%)}
 .logo{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;letter-spacing:-.02em}
 .logo b{color:var(--accent)}
@@ -45,9 +45,9 @@ nav.hide{transform:translateY(-100%)}
 .nav-r a{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);transition:color .15s}
 .nav-r a:hover{color:var(--accent)}
 .btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:var(--bg);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:7px 16px;border-radius:4px;transition:all .2s;white-space:nowrap}
-.btn:hover{background:#D4A017;transform:translateY(-1px)}
+.btn:hover{background:#E8B82A;transform:translateY(-1px)}
 .btn-ghost{background:none;border:1px solid var(--border2);color:var(--dim);font-size:11px;padding:6px 14px;border-radius:4px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;transition:all .2s}
-.btn-ghost:hover{border-color:var(--accent-d);color:var(--accent)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 
 /* ─── LAYOUT ─── */
 .wrap{max-width:860px;margin:0 auto;padding:0 32px}
@@ -69,7 +69,7 @@ section{padding:80px 0}
 /* ─── TOC ─── */
 .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:40px}
 .toc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:16px 18px;transition:all .2s}
-.toc-card:hover{border-color:var(--accent-d);transform:translateY(-1px);background:var(--bg-card-h)}
+.toc-card:hover{border-color:var(--accent);transform:translateY(-1px);background:var(--bg-card-h)}
 .toc-count{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:500;color:var(--accent);line-height:1}
 .toc-label{font-size:13px;font-weight:500;margin-top:4px}
 .toc-desc{font-size:11px;color:var(--faint);margin-top:2px}
@@ -82,17 +82,17 @@ section{padding:80px 0}
 /* ─── NOTE LINKS ─── */
 .note-list{display:flex;flex-direction:column;gap:1px}
 .note-link{display:flex;align-items:baseline;gap:12px;padding:12px 16px;background:var(--bg-card);border-left:3px solid var(--border);transition:all .18s;text-decoration:none}
-.note-link:hover{background:var(--bg-card-h);border-left-color:var(--accent-d)}
+.note-link:hover{background:var(--bg-card-h);border-left-color:var(--accent)}
 .note-link .n-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);min-width:32px;flex-shrink:0}
-.note-link .n-title{font-size:14px;font-weight:500;flex:1;line-height:1.4}
+.note-link .n-title{font-size:14px;font-weight:500;flex:1;line-height:1.4;color:var(--text)}
 .note-link .n-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 7px;border-radius:3px;flex-shrink:0;font-weight:500;letter-spacing:.03em}
-.tag-decision{background:#4DA88218;color:var(--green)}
-.tag-blocker{background:#A63D3D18;color:var(--red)}
-.tag-action{background:#B8860B18;color:var(--accent)}
-.tag-question{background:#5A94D418;color:var(--blue)}
-.tag-note{background:#9E978718;color:var(--dim)}
-.tag-idea{background:#8B7FD018;color:var(--lav)}
-.note-link .arrow{color:var(--faint);font-size:11px;opacity:0;transition:all .15s;flex-shrink:0}
+.tag-decision{background:#5CC99A20;color:var(--green)}
+.tag-blocker{background:#D4545420;color:var(--red)}
+.tag-action{background:#D4A01720;color:var(--accent)}
+.tag-question{background:#6AABEF20;color:var(--blue)}
+.tag-note{background:#C4BDB020;color:var(--dim)}
+.tag-idea{background:#A99AE820;color:var(--lav)}
+.note-link .arrow{color:var(--accent);font-size:11px;opacity:0;transition:all .15s;flex-shrink:0}
 .note-link:hover .arrow{opacity:1;transform:translateX(3px)}
 
 /* ─── GROUP LABELS ─── */
@@ -107,7 +107,7 @@ section{padding:80px 0}
 /* ─── ARCH STACK ─── */
 .arch{max-width:560px;margin:0 auto 48px}
 .arch-l{padding:14px 20px;text-align:center;font-size:14px;font-weight:500;position:relative}
-.arch-l.v{background:#B8860B12;border:1px solid var(--accent-d);color:var(--accent)}
+.arch-l.v{background:#D4A01716;border:1px solid var(--accent-d);color:var(--accent)}
 .arch-l.v:first-child{border-radius:6px 6px 0 0}
 .arch-wl{padding:8px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 14px);background-size:100% 1px;background-position:center;background-repeat:no-repeat}
 .arch-l.u{background:var(--bg-card);border:1px solid var(--border);border-top:none;color:var(--faint);font-size:12px}
@@ -122,7 +122,7 @@ section{padding:80px 0}
 .cta .sh-title{margin-bottom:12px}
 .cta p{color:var(--dim);font-size:16px;margin-bottom:32px}
 .cta-big{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:var(--bg);font-size:16px;font-weight:600;padding:16px 40px;border-radius:6px;transition:all .25s;letter-spacing:.02em}
-.cta-big:hover{background:#D4A017;transform:translateY(-2px);box-shadow:0 8px 32px #B8860B33}
+.cta-big:hover{background:#E8B82A;transform:translateY(-2px);box-shadow:0 8px 32px #D4A01744}
 .cta-big .arr{font-size:20px;transition:transform .2s}
 .cta-big:hover .arr{transform:translateX(4px)}
 
@@ -512,7 +512,7 @@ footer a:hover{text-decoration:underline}
 
   <div class="arch reveal">
     <a href="board.html?note=arch005" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent)">Intent Translation <span class="arch-tag tag-blocker">unsolved</span></a>
-    <a href="board.html?note=arch001" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent)">Intent Contract (L++ Blueprints) <span class="arch-tag" style="background:#B8860B22;color:var(--accent)">partial</span></a>
+    <a href="board.html?note=arch001" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent)">Intent Contract (L++ Blueprints) <span class="arch-tag" style="background:#D4A01722;color:var(--accent)">partial</span></a>
     <a href="board.html?note=arch001" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent)">L++ Blueprint Execution <span class="arch-tag tag-decision">solved</span></a>
     <div class="arch-wl">══ TRUST BOUNDARY · THE WATERLINE ══</div>
     <div class="arch-l u">Python runtime</div>
