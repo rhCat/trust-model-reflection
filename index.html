@@ -14,38 +14,50 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #08070A;
-  --bg2: #0E0D10;
-  --bg-card: #131218;
-  --bg-card-h: #1A1920;
-  --text: #F5F2EC;
-  --dim: #C4BDB0;
-  --faint: #807A6E;
-  --accent: #D4A017;
-  --accent-d: #B8860B;
-  --red: #D45454;
-  --green: #5CC99A;
-  --blue: #6AABEF;
-  --lav: #A99AE8;
-  --border: #2D2B33;
-  --border2: #403D48;
+  --bg: #F0E8D8;
+  --bg2: #E8DFCC;
+  --bg-card: #F6F0E2;
+  --bg-card-h: #FFF9EC;
+  --text: #1C1710;
+  --dim: #4A4236;
+  --faint: #7D7264;
+  --accent: #8B6914;
+  --accent-d: #6B4F0A;
+  --accent-l: #A67C1A;
+  --red: #8B2020;
+  --green: #2A6B4F;
+  --blue: #2A5580;
+  --lav: #4A3D80;
+  --border: #D4C9B4;
+  --border2: #C2B59C;
+  --shadow: #1C171008;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#403D48 #08070A}
-body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-weight:300;line-height:1.7;font-size:16px;-webkit-font-smoothing:antialiased}
-::selection{background:var(--accent);color:var(--bg)}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border2) var(--bg)}
+body{
+  background:var(--bg);
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;
+  font-weight:400;
+  line-height:1.7;
+  font-size:16px;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--accent);color:#FFF9EC}
 a{color:inherit;text-decoration:none}
 
 /* ─── NAV ─── */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;height:50px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;background:#08070AE8;backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:transform .3s}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:50px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;background:#F0E8D8F0;backdrop-filter:blur(14px);border-bottom:1px solid var(--border);transition:transform .3s;box-shadow:0 1px 8px #1C17100A}
 nav.hide{transform:translateY(-100%)}
-.logo{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;letter-spacing:-.02em}
+.logo{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--text)}
 .logo b{color:var(--accent)}
 .nav-r{display:flex;align-items:center;gap:24px}
-.nav-r a{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);transition:color .15s}
+.nav-r a{font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);transition:color .15s}
 .nav-r a:hover{color:var(--accent)}
-.btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:var(--bg);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:7px 16px;border-radius:4px;transition:all .2s;white-space:nowrap}
-.btn:hover{background:#E8B82A;transform:translateY(-1px)}
+.btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#FFF9EC;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:7px 16px;border-radius:4px;transition:all .2s;white-space:nowrap}
+.btn:hover{background:var(--accent-d);transform:translateY(-1px);box-shadow:0 4px 12px #6B4F0A22}
 .btn-ghost{background:none;border:1px solid var(--border2);color:var(--dim);font-size:11px;padding:6px 14px;border-radius:4px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;transition:all .2s}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 
@@ -59,39 +71,39 @@ section{padding:80px 0}
 /* ─── HERO ─── */
 .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:120px 0 80px;position:relative}
 .hero-over{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin-bottom:24px;opacity:0;animation:up .7s .15s forwards}
-.hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(44px,6.5vw,80px);font-weight:700;line-height:1.06;letter-spacing:-.03em;margin-bottom:28px;opacity:0;animation:up .7s .3s forwards}
+.hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(44px,6.5vw,80px);font-weight:700;line-height:1.06;letter-spacing:-.03em;margin-bottom:28px;opacity:0;animation:up .7s .3s forwards;color:var(--text)}
 .hero h1 em{font-style:italic;color:var(--accent)}
-.hero-sub{font-size:18px;font-weight:300;line-height:1.65;color:var(--dim);max-width:620px;margin-bottom:40px;opacity:0;animation:up .7s .5s forwards}
-.hero-stats{display:flex;gap:28px;font-size:12px;color:var(--faint);opacity:0;animation:up .7s .65s forwards;flex-wrap:wrap}
-.hero-stats span::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:middle}
+.hero-sub{font-size:18px;font-weight:400;line-height:1.65;color:var(--dim);max-width:620px;margin-bottom:40px;opacity:0;animation:up .7s .5s forwards}
+.hero-stats{display:flex;gap:28px;font-size:12px;font-weight:500;color:var(--faint);opacity:0;animation:up .7s .65s forwards;flex-wrap:wrap}
+.hero-stats span::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:middle}
 .hero-cta{display:flex;gap:12px;margin-top:36px;opacity:0;animation:up .7s .8s forwards;flex-wrap:wrap}
 
 /* ─── TOC ─── */
 .toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:40px}
-.toc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:16px 18px;transition:all .2s}
-.toc-card:hover{border-color:var(--accent);transform:translateY(-1px);background:var(--bg-card-h)}
+.toc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:16px 18px;transition:all .2s;box-shadow:0 1px 4px var(--shadow)}
+.toc-card:hover{border-color:var(--accent);transform:translateY(-2px);background:var(--bg-card-h);box-shadow:0 4px 16px #1C17100C}
 .toc-count{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:500;color:var(--accent);line-height:1}
-.toc-label{font-size:13px;font-weight:500;margin-top:4px}
+.toc-label{font-size:13px;font-weight:600;margin-top:4px;color:var(--text)}
 .toc-desc{font-size:11px;color:var(--faint);margin-top:2px}
 
 /* ─── SECTION HEADERS ─── */
 .sh-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
-.sh-title{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,4vw,48px);font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-bottom:14px}
-.sh-lead{font-size:17px;font-weight:300;line-height:1.6;color:var(--dim);max-width:620px;margin-bottom:48px}
+.sh-title{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,4vw,48px);font-weight:700;line-height:1.1;letter-spacing:-.02em;margin-bottom:14px;color:var(--text)}
+.sh-lead{font-size:17px;font-weight:400;line-height:1.6;color:var(--dim);max-width:620px;margin-bottom:48px}
 
 /* ─── NOTE LINKS ─── */
 .note-list{display:flex;flex-direction:column;gap:1px}
-.note-link{display:flex;align-items:baseline;gap:12px;padding:12px 16px;background:var(--bg-card);border-left:3px solid var(--border);transition:all .18s;text-decoration:none}
-.note-link:hover{background:var(--bg-card-h);border-left-color:var(--accent)}
-.note-link .n-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);min-width:32px;flex-shrink:0}
+.note-link{display:flex;align-items:baseline;gap:12px;padding:12px 16px;background:var(--bg-card);border-left:3px solid var(--border);transition:all .18s;text-decoration:none;box-shadow:0 1px 2px var(--shadow)}
+.note-link:hover{background:var(--bg-card-h);border-left-color:var(--accent);box-shadow:0 2px 8px #1C17100A}
+.note-link .n-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);min-width:32px;flex-shrink:0;font-weight:500}
 .note-link .n-title{font-size:14px;font-weight:500;flex:1;line-height:1.4;color:var(--text)}
 .note-link .n-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 7px;border-radius:3px;flex-shrink:0;font-weight:500;letter-spacing:.03em}
-.tag-decision{background:#5CC99A20;color:var(--green)}
-.tag-blocker{background:#D4545420;color:var(--red)}
-.tag-action{background:#D4A01720;color:var(--accent)}
-.tag-question{background:#6AABEF20;color:var(--blue)}
-.tag-note{background:#C4BDB020;color:var(--dim)}
-.tag-idea{background:#A99AE820;color:var(--lav)}
+.tag-decision{background:#2A6B4F18;color:var(--green);border:1px solid #2A6B4F22}
+.tag-blocker{background:#8B202018;color:var(--red);border:1px solid #8B202022}
+.tag-action{background:#8B691418;color:var(--accent);border:1px solid #8B691422}
+.tag-question{background:#2A558018;color:var(--blue);border:1px solid #2A558022}
+.tag-note{background:#7D726418;color:var(--faint);border:1px solid #7D726422}
+.tag-idea{background:#4A3D8018;color:var(--lav);border:1px solid #4A3D8022}
 .note-link .arrow{color:var(--accent);font-size:11px;opacity:0;transition:all .15s;flex-shrink:0}
 .note-link:hover .arrow{opacity:1;transform:translateX(3px)}
 
@@ -107,7 +119,7 @@ section{padding:80px 0}
 /* ─── ARCH STACK ─── */
 .arch{max-width:560px;margin:0 auto 48px}
 .arch-l{padding:14px 20px;text-align:center;font-size:14px;font-weight:500;position:relative}
-.arch-l.v{background:#D4A01716;border:1px solid var(--accent-d);color:var(--accent)}
+.arch-l.v{background:#8B691412;border:1px solid var(--accent);color:var(--accent-d)}
 .arch-l.v:first-child{border-radius:6px 6px 0 0}
 .arch-wl{padding:8px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 14px);background-size:100% 1px;background-position:center;background-repeat:no-repeat}
 .arch-l.u{background:var(--bg-card);border:1px solid var(--border);border-top:none;color:var(--faint);font-size:12px}
@@ -121,8 +133,8 @@ section{padding:80px 0}
 .cta{text-align:center;padding:100px 0}
 .cta .sh-title{margin-bottom:12px}
 .cta p{color:var(--dim);font-size:16px;margin-bottom:32px}
-.cta-big{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:var(--bg);font-size:16px;font-weight:600;padding:16px 40px;border-radius:6px;transition:all .25s;letter-spacing:.02em}
-.cta-big:hover{background:#E8B82A;transform:translateY(-2px);box-shadow:0 8px 32px #D4A01744}
+.cta-big{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#FFF9EC;font-size:16px;font-weight:600;padding:16px 40px;border-radius:6px;transition:all .25s;letter-spacing:.02em}
+.cta-big:hover{background:var(--accent-d);transform:translateY(-2px);box-shadow:0 8px 32px #6B4F0A22}
 .cta-big .arr{font-size:20px;transition:transform .2s}
 .cta-big:hover .arr{transform:translateX(4px)}
 
@@ -511,9 +523,9 @@ footer a:hover{text-decoration:underline}
   </p>
 
   <div class="arch reveal">
-    <a href="board.html?note=arch005" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent)">Intent Translation <span class="arch-tag tag-blocker">unsolved</span></a>
-    <a href="board.html?note=arch001" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent)">Intent Contract (L++ Blueprints) <span class="arch-tag" style="background:#D4A01722;color:var(--accent)">partial</span></a>
-    <a href="board.html?note=arch001" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent)">L++ Blueprint Execution <span class="arch-tag tag-decision">solved</span></a>
+    <a href="board.html?note=arch005" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent-d)">Intent Translation <span class="arch-tag tag-blocker">unsolved</span></a>
+    <a href="board.html?note=arch001" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent-d)">Intent Contract (L++ Blueprints) <span class="arch-tag" style="background:#8B691418;color:var(--accent);border:1px solid #8B691422">partial</span></a>
+    <a href="board.html?note=arch001" class="arch-l v" style="display:block;text-decoration:none;color:var(--accent-d)">L++ Blueprint Execution <span class="arch-tag tag-decision">solved</span></a>
     <div class="arch-wl">══ TRUST BOUNDARY · THE WATERLINE ══</div>
     <div class="arch-l u">Python runtime</div>
     <div class="arch-l u">OS / system libraries</div>
