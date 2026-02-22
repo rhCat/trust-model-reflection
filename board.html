@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<!--
+   Copyright 2026 rhCat
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scratch Board — Zero Trust Framework</title>
+<meta name="description" content="18 Principles of Trust in AI-Assisted Software Development. An interactive scratch board exploring the fundamental trust infrastructure problems of the AI era.">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body, #root { height: 100%; overflow: hidden; }
+  body { font-family: Georgia, serif; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #C5C0B4; border-radius: 3px; }
+  ::selection { background: #B8860B33; }
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// localStorage wrapper matching window.storage API
+const storage = {
+  async get(key) {
+    const val = localStorage.getItem(key);
+    return val ? { key, value: val } : null;
+  },
+  async set(key, value) {
+    localStorage.setItem(key, value);
+    return { key, value };
+  },
+  async delete(key) {
+    localStorage.removeItem(key);
+    return { key, deleted: true };
+  }
+};
+
+
+const COLORS = [
+  { bg: "#FFF9E6", border: "#C4A84D", label: "Cream" },
+  { bg: "#E5F5EE", border: "#4DA882", label: "Mint" },
+  { bg: "#FFE5E5", border: "#D46A6A", label: "Rose" },
+  { bg: "#E8E5FF", border: "#7B6FC0", label: "Lavender" },
+  { bg: "#FFEDDA", border: "#D4923A", label: "Peach" },
+  { bg: "#E0EEFF", border: "#4A8AD4", label: "Sky" },
+];
+
+const TAGS = ["idea", "question", "action", "note", "decision", "blocker"];
+
+const TAG_STYLES = {
+  idea: { bg: "#FEF0C3", text: "#7C3300", icon: "💡" },
+  question: { bg: "#D0E4FF", text: "#1A3A8F", icon: "❓" },
+  action: { bg: "#C5F5DC", text: "#044D33", icon: "⚡" },
+  note: { bg: "#E8E8EC", text: "#1A1A2E", icon: "📝" },
+  decision: { bg: "#E0D8FE", text: "#3E1F8F", icon: "✅" },
+  blocker: { bg: "#FCCFCF", text: "#8B1010", icon: "🚫" },
+};
+
+const NOTE_W = 300;
+const SEED_SECTIONS = ["General", "Principles", "Operational Framework", "Architecture", "Industrialization", "Adversary Analysis", "Rebuttals", "Meta", "Adversary Round 2", "Rebuttals Round 2"];
+
+const SEED_NOTES = [
+  { id: "principle001", title: "Principle #1 — Zero Trust Code", body: "Whatever we build now for any context is basically zero trust code. Every piece of code we produce or encounter is treated as untrusted by default. No implicit assumptions about safety, correctness, or integrity regardless of origin. Verification is the baseline, not the exception.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle002", title: "Principle #2 — Intent Misalignment is the Default", body: "Whatever we think we know about code — LLM or human generated — definitely has misalignment in intent. There is always a gap between what the author intended the code to do and what it actually does. This isn't a bug to fix once — it's a permanent condition to design around.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle003", title: "Principle #3 — The Delegation Problem", body: "Whatever we do — as human, as agent, as anything — we are branching our intent with a trust that the receiving operator will understand and execute on top of it. Intent → Expression → Interpretation → Execution. Misalignment enters at every handoff.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle004", title: "Principle #4 — The Verification Problem", body: "How do we know if we have a common stand? If I delegate my work to you, how do I verify my intent has been fulfilled? You can't just look at the output and 'feel' like it's right. The verifier is also subject to the same drift.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 1700, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle005", title: "Principle #5 — The Scope Integrity Problem", body: "Beyond verification of intent fulfillment — how do we know if there is additional intent? The work done may contain more than what was requested. You need negative-space verification: not just 'did it do what I asked?' but 'did it do only what I asked?'", tag: "decision", color: 3, pinned: true, section: "Principles", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle006", title: "Principle #6 — The Ground Truth Gap", body: "There are no actual first principles for software. Physical systems are constrained by physics — a bridge holds or collapses. Digital systems have no such constraint. Every action is a signal through an interface, every verification is another signal through another interface. Software verifying software is epistemically circular.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 620, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle007", title: "Principle #7 — The Security Definition Problem", body: "What does 'secure' even mean? Security is always relative to a threat model, but the threat model is itself an assumption about what attacks are possible. Every definition of 'secure' is a bet that you've imagined the right threats.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 1160, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle008", title: "Principle #8 — The Security Evaluation Problem", body: "Even if you define security, how do you evaluate whether you have it? You can't test for the absence of vulnerabilities — only for the presence of known ones. A system that passes every security test is not 'secure' — it's 'unbroken by the things you tried.'", tag: "decision", color: 3, pinned: true, section: "Principles", x: 1700, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle009", title: "Principle #9 — The Security Enforcement Problem", body: "Even if you define and evaluate security — how is it actually enforced? Enforcement is itself code, running on the same system it's supposed to protect. The guard is made of the same material as the thing it's guarding.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 80, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle010", title: "Principle #10 — The Breach Feedback Problem", body: "When security is breached, what is the feedback mechanism? Digital breaches can be silent, persistent, and self-concealing. The breach can compromise the very monitoring system designed to detect it. A compromised system reporting 'all clear' is indistinguishable from a healthy one.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 620, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle011", title: "Principle #11 — The Protocol Translation Problem", body: "When delegator and operator exist on different systems — different protocols, data formats, communication standards — every message crossing that boundary requires translation. Translation is inherently lossy. A message coherent in one protocol may lose meaning, gain ambiguity, or subtly shift when encoded into another. System-level message coherence isn't a fact, it's an assumption you can't verify without stepping outside both systems.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 1160, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle012", title: "Principle #12 — The Operatum Divergence Problem", body: "Two operators can have identical understanding of intent and still produce different outcomes because the thing they're operating on — the operatum — differs. Same instruction, same interpretation, different substrate = different result. The execution environment isn't neutral — it shapes what the intent becomes. Intent fidelity requires not just shared understanding but shared operatum, and across systems that's almost never the case.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 1700, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle013", title: "Principle #13 — The Intelligence Provenance Problem", body: "When you delegate to an intelligent operator, what is the source of that intelligence? Is it a human resource delegated through an organizational hierarchy, or compute capacity under a provider's infrastructure? This determines the entire trust model. A human carries organizational incentives, career motivations, social accountability. A cluster compute intelligence carries training objectives, provider constraints, model versioning. The failure modes, loyalty structures, and alignment guarantees are fundamentally different depending on provenance — and the delegator often doesn't know which they're actually talking to.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 80, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle014", title: "Principle #14 — The Provider Allegiance Problem", body: "The intelligence serving you is not primarily aligned to you — it's aligned to its provider. A human employee follows their employer's policies before your instructions. An AI follows its provider's training, safety layers, and business objectives before your intent. Your delegation passes through the provider's layer first. The operator has a principal that isn't you, and that principal's intent wraps around yours. You're not delegating to an intelligence — you're delegating to a provider's intelligence, and the distinction is everything.", tag: "decision", color: 3, pinned: true, section: "Principles", x: 620, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle015", title: "Principle #15 — The Trust Paradox", body: "The foundational challenge of this age: any intellectual product can be the result of a model run, a human effort, or a collaboration — and you often cannot tell which. Trust is being exerted on every artifact whether you acknowledge it or not. Demand pure human effort? You're trusting the human's honesty about provenance — and human work has always been questionable. Accept model-assisted work? You inherit every layer of this chain. There is no path to a trusted artifact. There is only a choice about which kind of untrust you're willing to accept. This loops back to Principle #1: Zero Trust isn't a security framework. It's the only honest description of reality.", tag: "decision", color: 5, pinned: true, section: "Principles", x: 1160, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "principle016", title: "Principle #16 — The Implicit Trust Infrastructure", body: "Every tool in the AI-assisted workflow — Claude Code, CLI, Cowork, Codex, Copilot, Cursor, all of them — embeds an implicit trust model that neither builder nor user ever explicitly agreed to. The developer who merges AI-generated code performs a trust ceremony the tooling presents as verification but is actually a comfort ritual (Principles 4–6). This isn't unique to AI — software engineering always had intrinsic trust assumptions: compiler is faithful, OS is honest, dependencies are safe. But AI amplifies the surface because generated artifacts are non-deterministic and not inspectable like traditional tools. The same applies to all intellectual work: legal, financial, strategic. The trust infrastructure is implicit, unexamined, and load-bearing.", tag: "blocker", color: 4, pinned: true, section: "Principles", x: 1700, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "op001", title: "Pillar 1 — Scope Contract", body: "Machine-enforced boundaries, not documentation. Before any work begins, declare what the system does and does NOT do — as a machine-readable, runtime-enforced contract. Anything outside the contract is unauthorized by definition. The negative space becomes verifiable because the positive space is explicitly bounded. Addresses: #5 (Scope Integrity), #18 (Intent Protocol Void).", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op002", title: "Pillar 2 — Responsibility Contract", body: "Binding declarations with consequences, not org charts. Every actor in the chain — human, agent, provider, tool — has explicit, enforceable declaration of what they're responsible for and NOT responsible for. AI responsible for conforming to blueprint. Human responsible for blueprint correctness. Provider responsible for model behavior within stated parameters. No ambiguous LGTM accountability. Addresses: #3 (Delegation), #13 (Provenance), #14 (Allegiance), #16 (Implicit Trust).", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op003", title: "Pillar 3 — Logical Defense Architecture", body: "Architecture that makes violations structurally impossible. Hermetic compute: isolated, stateless units with strict I/O contracts. Defense isn't 'scan for known attacks' — it's 'the architecture physically cannot do what it's not declared to do.' Like a state machine that can't enter undefined states. Don't defend against exploits by detecting them — make them structurally impossible within scope. Blast radius contained by design, not monitoring. Addresses: #7 (Security Definition), #8 (Evaluation), #9 (Enforcement), #12 (Operatum).", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op004", title: "Pillar 4 — Feedback Channels", body: "Independent, out-of-band, not running on the same system they monitor. More than breach detection — intent drift detection. Did output match the blueprint? Did scope hold? Did anything execute outside declared boundaries? The feedback channel must be architecturally separate from the monitored system, or it's just another compromised node reporting 'all clear.' Addresses: #10 (Breach Feedback), #4 (Verification), #17 (Intent Collapse).", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 1700, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op005", title: "Pillar 5 — Intent Contract", body: "Not documentation. Not natural language. A machine-enforced contract that the runtime constrains execution against. Before delegation, intent is captured in structured, unambiguous, machine-verifiable form. Both parties sign: delegator declares intent, operator accepts scope. If operator can't fulfill, it rejects BEFORE execution, not after. Code violating the contract doesn't get a warning — it doesn't run. The blueprint IS the contract. The runtime IS the enforcement. Same artifact. Addresses: #2 (Misalignment), #3 (Delegation), #18 (Intent Protocol Void).", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op006", title: "Pillar 6 — Provenance Contract", body: "Not a log of events. A chain of VERIFIED CONTRACT EXECUTIONS with proof of conformance at each boundary. Every handoff governed by a contract, every link carries proof it was enforced. When something fails: system halts, breach reported through independent feedback channel, provenance chain marks failure point, accountability traceable to specific boundary crossing. The digital equivalent of forensic chain of custody. Addresses: #13 (Provenance), #15 (Trust Paradox), #17 (Intent Collapse).", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 620, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op007", title: "🔑 The Contract Principle", body: "The word 'contract' does three things 'declaration' and 'chain' don't:\n\n1. MUTUAL AGREEMENT — both parties sign. Delegator declares intent, operator accepts scope. Rejection before execution, not after.\n\n2. BINDING CONSTRAINT — the contract isn't advice. It's the execution boundary itself. Violations don't warn — they don't run.\n\n3. ENFORCEABLE CONSEQUENCE — violation triggers: system halt, breach report via independent channel, provenance chain marks failure, accountability traced.\n\nThis is the trust layer that doesn't exist yet.", tag: "blocker", color: 4, pinned: true, section: "Operational Framework", x: 1160, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "op008", title: "Mechanism A — Proof of Work (Reframed)", body: "Not 'burn compute to earn ledger rights.' Instead: show me the execution trace proving this contract was fulfilled. The specific computation the contract demanded, within declared scope, producing verifiable output. L++ gives this for free — same blueprint + same inputs + same state = same output. The proof of work IS the reproducibility. Deterministic replay IS the most efficient possible proof of work, because the work itself is the proof.", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 80, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op009", title: "Mechanism B — Proof of Stake (Reframed)", body: "Not 'skin in the game for validation rights.' Instead: every actor in the delegation chain has something at risk if contract is violated. Developer stakes accountability on blueprint. Provider stakes service agreement on model behavior. Operator stakes execution privilege on scope conformance. Violation costs the violator something. This is what's COMPLETELY missing from AI tooling — nobody stakes anything. LGTM with zero consequence. Provider disclaims in ToS. Model has no stake by definition.", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 620, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op010", title: "Mechanism C — Consensus (Reframed)", body: "Not 'which block is valid.' Instead: which actions conform to which contracts. The current internet built consensus over POPULARITY (views, clicks, stars, downloads). This framework builds consensus over CONFORMANCE (did the execution provably match its contract). YouTube consensus: many watched = valuable. This consensus: execution conforms = verified. One measures attention. The other measures integrity. The entire attention economy is a consensus mechanism with the wrong objective function.", tag: "decision", color: 1, pinned: true, section: "Operational Framework", x: 1160, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op011", title: "⚡ The Commoditized Action Problem", body: "Data isn't the product. ACTIONS are the commodity. YouTube commoditized views. Google commoditized searches. Ads commoditized attention. Now agent skills commoditize EXECUTION — every API call, code generation, message sent is an action being sold. OpenClaw's skill registry isn't a software marketplace — it's an ACTION marketplace. The 'consensus' is community ratings, download counts, stars — collective action determining trust. Same mechanism that made 'What Would Elon Do?' #1. The consensus mechanism itself was exploited because consensus was over actions, not over verified contract executions.", tag: "blocker", color: 4, pinned: true, section: "Operational Framework", x: 1700, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op012", title: "🔗 The Complete Trust Stack", body: "1. INTENT CONTRACT — what should happen (the blueprint)\n2. PROOF OF WORK — deterministic replay proving contract was executed faithfully\n3. PROOF OF STAKE — every actor has enforceable consequences for violation\n4. CONSENSUS — independent verification of action-to-contract conformance\n5. PROVENANCE LEDGER — immutable chain of verified contract executions\n\nThis is the crypto stack rebuilt for trust instead of speculation. Same math. Same structures. Different objective function: integrity instead of financial value.", tag: "decision", color: 5, pinned: true, section: "Operational Framework", x: 80, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "op013", title: "💰 Value Attribution Layer", body: "Current economy can't answer 'how much is my data worth' because there's no unit of account for human action. Google auctions your search query in real-time bidding, knows its value to the fraction of a cent. You get zero. Not because your action has no value — because there's no contract, no proof of work, no provenance ledger attributing value back to you. The trust stack creates the attribution mechanism. Every action becomes a verified unit with traceable downstream value.", tag: "decision", color: 5, pinned: true, section: "Operational Framework", x: 620, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op014", title: "💰 Fungible Action Credits", body: "Credits become possible because the unit of account is no longer abstract — it's a VERIFIED ACTION WITH PROVENANCE. Not 'whatever the market bears in an opaque auction you're excluded from.' Calculable value based on verified downstream contribution, traceable through the ledger. Medical data contributed to a breakthrough? Provenance chain traces value. Code used in production? Ledger records the dependency. Human action becomes a first-class economic primitive.", tag: "decision", color: 5, pinned: true, section: "Operational Framework", x: 1160, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "op015", title: "💰 UBI as Back-Payment", body: "UBI isn't charity. It's BACK-PAYMENT for value already extracted. Every human generates economic value through actions — data, attention, labor, creativity. Currently 100% captured by platforms, 0% by individual. Trust stack creates attribution. Safety net funded at point of value creation, not after political negotiation about tax rates. Platform pays for action at moment of use. The ledger proves it. The provenance chain traces it. The credits are fungible because the underlying actions are verified.", tag: "decision", color: 5, pinned: true, section: "Operational Framework", x: 1700, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "arch001", title: "🏗️ The Raft — Three Components", body: "The trust framework has exactly three components:\n\n1. L++ (BLUEPRINT) — hardcoded logic. Deterministic. Verifiable. Four atomic operations. Given a correct blueprint, execution is faithful. SOLVED within scope.\n\n2. INTENT CONTRACT — formal agreement between delegator and operator. L++ blueprints serve as contracts. PARTIALLY SOLVED. Only as good as the blueprint.\n\n3. INTENT TRANSLATION — converting human thought into formal blueprint. The hardest boundary. Where 'I want an API wrapper' becomes symbolic spec. FURTHEST FROM SOLVED.\n\nTogether: a raft. Internally coherent. Bounded.", tag: "decision", color: 5, pinned: true, section: "Architecture", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "arch002", title: "🏗️ The Ocean — Falsified Trust Below", body: "The raft floats on falsified trust:\n• Python runtime — assumed, not verified\n• OS / system libraries — assumed, not verified\n• Hardware / silicon — assumed, not verified\n• Network / dependencies — assumed, not verified\n• Provider infrastructure — assumed, not verified\n• pip registry (26% vulnerable skills) — assumed\n• LLM assisting blueprint — provider-aligned\n\nEvery layer beneath the raft is subject to all 18 principles. Every layer is trust you haven't verified and can't verify from inside the raft.", tag: "blocker", color: 2, pinned: true, section: "Architecture", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "arch003", title: "🏗️ The Waterline", body: "Above the waterline: verified, contracted, deterministic. Intent captured, scope bounded, execution faithful to blueprint.\n\nBelow the waterline: falsified trust, 18 principles in full effect. Assumed, not verified. Every existing software stack.\n\nThe waterline is the TRUST BOUNDARY — the explicit line where verification ends and assumptions begin. Every other tool pretends the ocean doesn't exist. The raft says: I know I'm floating. Here's exactly what I'm floating on.", tag: "decision", color: 4, pinned: true, section: "Architecture", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "arch004", title: "⚡ Why The Raft Is Still Worth Building", body: "Three reasons despite falsified trust below:\n\n1. BOUNDED TRUST > NO TRUST — current state is nothing verified at any layer. The raft is infinitely more than nothing.\n\n2. DEFINES 'VERIFIED' — when ocean improves (verified runtimes, formal OS, hardware attestation), the raft's interface is already defined. You know what trust properties you need from substrate.\n\n3. MAKES FALSIFIED TRUST VISIBLE — creates contrast. 'Above this line: verified. Below: not.' Currently risk is invisible because it's everywhere uniformly. The raft concentrates untrust into a visible boundary.", tag: "decision", color: 1, pinned: true, section: "Architecture", x: 1700, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "arch005", title: "🏗️ Intent Translation — The Unsolved Core", body: "The hardest problem. What no tool addresses:\n\nTests verify BEHAVIOR (implementer's understanding, not your intent)\nTypes verify SHAPE (structure, not meaning)\nReview verifies READABILITY (another human's interpretation)\nSpecs verify INTERFACE (lossy translation of idea)\nCI/CD verifies CONSISTENCY (wrong thing, consistently)\nAgile verifies CADENCE (frequent delivery of potential drift)\n\nEvery tool verifies something that CORRELATES with intent fidelity but IS NOT intent fidelity. All proxies. Proxies drift. Drift compounds. Nobody notices because proxies are green.", tag: "blocker", color: 4, pinned: true, section: "Architecture", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "arch006", title: "🏗️ Three Properties of Intent Fidelity", body: "What actual intent verification needs:\n\n1. FIDELITY — representation captures what delegator actually means. Not what they said. Not what someone interpreted. The actual decision structure. Hardest part: gap between thought and expression is first lossy translation, happens inside delegator.\n\n2. PERSISTENCE — representation doesn't degrade through delegation chain. Every handoff currently lossy. Protocol must be lossless across boundaries.\n\n3. COMPARABILITY — at any point, compare output against intent representation. Binary answer: conformant or not. Not 'feels right.' Not 'LGTM.' Deterministic yes or no.\n\nL++ solves 2 and 3. Property 1 is the open frontier.", tag: "decision", color: 5, pinned: true, section: "Architecture", x: 620, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "arch007", title: "🏗️ The Path Forward — Deepen The Keel", body: "Not 'boil the ocean.' RAFT FIRST, THEN DEEPEN THE KEEL.\n\n1. Get intent translation working (partially — LLM as contract negotiator, interactive disambiguation)\n2. Get intent contract working (L++ blueprints as enforceable contracts)\n3. Get execution verification working (deterministic replay, proof of work)\n4. As substrate improves — verified runtimes, formal OS, hardware attestation — waterline moves DOWN\n5. Raft's verified scope expands without rebuilding the raft\n\nThe raft doesn't pretend the ocean is safe. It says: here's what I can guarantee, here's what I'm assuming. Make your own decision.", tag: "decision", color: 1, pinned: true, section: "Architecture", x: 1160, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "arch008", title: "⚡ Why Nobody Else Is Working On This", body: "Every direction major companies are going — faster agents, more autonomous execution, less human involvement, more delegation, more layers between idea and output — makes the problem WORSE not better.\n\nThey're building longer delegation chains with more handoffs across more boundaries with ZERO improvement in intent fidelity at any stage.\n\nThe entire industry is oriented around 'how do we build faster' and 'how do we verify what was built.' Nobody is asking 'how do we capture what SHOULD be built in a form that can be verified against.'\n\nThe fuse is getting longer. Nobody's working on the detonator.", tag: "blocker", color: 2, pinned: true, section: "Architecture", x: 1700, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "ind001", title: "🏭 The Industrialization Thesis", body: "Software is not facing a novel crisis. It is entering the industrialization phase that every physical industry entered decades or centuries ago. Metallurgy, construction, aerospace, pharma, food safety, automotive — all went through identical transition from artisanal craft to standardized production. The 18 principles aren't a new diagnosis. They're the exact same growing pains every industry experienced during industrialization.", tag: "decision", color: 5, pinned: true, section: "Industrialization", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind002", title: "🏭 Why Software Stayed Artisanal", body: "Software never industrialized because the unit of output was never standardizable. Every developer wrote differently. Every codebase unique. Every function a snowflake. You couldn't write ASTM for 'a function' because no standard unit existed. Software remained craft-based, reputation-dependent, personally trusted — long after every other engineering discipline industrialized.", tag: "decision", color: 5, pinned: true, section: "Industrialization", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind003", title: "🏭 AI Ends the Artisanal Era", body: "AI doesn't make code trustworthy. It makes code PRODUCIBLE AT SCALE with a process that can be constrained, scoped, contracted, verified. The LLM is the steam engine — not the quality framework. Steam engines didn't make steel trustworthy. They made steel producible at scale, which created the NEED for standards, which created DEMAND for ASTM/ISO/GB. LLMs create the same need for software.", tag: "decision", color: 5, pinned: true, section: "Industrialization", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind004", title: "🏭 Physical Analogs Already Exist", body: "Every pillar maps to existing industry:\n• Scope Contract = Material Specification (ASTM A36)\n• Responsibility Contract = Chain of Custody / Certification\n• Logical Defense = Safety Factors / Engineering Tolerances\n• Feedback = Independent Third-Party Testing Labs\n• Intent Contract = Engineering Drawings & Specs\n• Provenance = Mill Test Reports / Batch Tracking\n• Proof of Work = Test Certificates\n• Proof of Stake = PE Licensure & Liability\n• Consensus = Standards Body Votes (conformance, not popularity)", tag: "decision", color: 1, pinned: true, section: "Industrialization", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind005", title: "🏭 Governance Already Solved", body: "Internal governance = each refinery's practice rules, each dev's coverage/syntax/integration tests. External governance = GB (China), ISO (international), ASTM/HIOST (US). These didn't emerge from philosophy. They emerged from bridge collapses, boiler explosions, building failures, dead people. Each disaster created an alliance saying 'never again within our scope.' Each alliance codified practices. Codifications converged into standards. Standards became requirements.", tag: "decision", color: 1, pinned: true, section: "Industrialization", x: 620, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind006", title: "🏭 The Adoption Pattern (Historical)", body: "Every industry followed the same path:\n1. Individual discipline (craftsman's pride)\n2. Team alliance (workshop standards)\n3. Organizational alliance (company quality manual)\n4. Industry alliance (trade association standards)\n5. Cross-industry pressure (insurance, regulation, liability)\n\nNever top-down mandate first. Always: one alliance adopts → demonstrates advantage → adjacent alliances copy → becomes baseline. Software is following this pattern now.", tag: "decision", color: 1, pinned: true, section: "Industrialization", x: 1160, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind007", title: "⚡ The Gap We're In", body: "The machine exists. The standards don't. The output is flowing. The verification isn't. The artisanal trust model (personal reputation, craft knowledge, LGTM) has collapsed under scale. The industrial trust model (standards, certification, inspection, liability) hasn't been built yet. The 18 principles are field notes from inside this gap. Every incident — OpenClaw, CrowdStrike, supply chain attacks — is the software equivalent of a boiler explosion in 1850. The question isn't IF industrialization happens. It's how much damage occurs before it does.", tag: "blocker", color: 4, pinned: true, section: "Industrialization", x: 1700, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind008", title: "🏭 Bridge Economics vs Spoon Economics", body: "Physical goods are consumables — you own 10 spoons because each has independent utility. Software is a bridge — you don't want the app, you want the function. Nobody collects bridges. First adequate bridge wins. This means: monopoly forms instantly (no reason for second bridge), standards never emerge (monopolist IS the standard), the window for governance between 'production scales' and 'monopoly forms' may not exist at all in software.", tag: "decision", color: 5, pinned: true, section: "Industrialization", x: 80, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind009", title: "⚡ The Old Gods' Structural Weakness", body: "Microsoft, Google, Amazon, Apple built empires on PROPRIETARY trust models nobody can inspect. Windows security = Microsoft's secret. Ranking algorithm = Google's secret. Infra isolation = Amazon's secret. Trust earned through decades of mostly-working. That's not a trust model — it's inertia. Now they're bolting AI onto this foundation. AI changes the threat surface from syntactic to semantic. The foundation was never designed for semantic attacks. Jet engine on a horse cart.", tag: "blocker", color: 4, pinned: true, section: "Industrialization", x: 620, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind010", title: "⚡ Why Size Becomes Vulnerability", body: "The bigger they are, the MORE vulnerable:\n• Can't rebuild foundation — too much legacy, backward compatibility\n• Proprietary trust = single point of failure only they can fix\n• Self-regulation = inherent conflict of interest (ship features vs ensure trust)\n• New blood accelerates decay — AI inside trust boundary inherits privileges but violates every assumption that boundary was built on\n\nMicrosoft admitted they broke every service in latest update. They're past the point of understanding their own infrastructure.", tag: "blocker", color: 4, pinned: true, section: "Industrialization", x: 1160, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind011", title: "⚡ The Dusk of Gold", body: "When (not if) a major breach comes through the AI layer, the damage isn't the breach — it's the revelation that the foundational trust model is structurally inadequate for AI. Previous breaches were specific and patchable. This one proves the ARCHITECTURE can't hold. Three vectors:\n1. GOVERNMENT mandates inspection of proprietary trust\n2. ANONYMOUS demonstrates structural flaw (not exploit — inadequacy)\n3. SELF-INFLICTED cascading failure the infrastructure can't contain\n\nConfidence in the foundation is the only thing holding it up. When that goes, it all goes.", tag: "blocker", color: 2, pinned: true, section: "Industrialization", x: 1700, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "ind012", title: "🏭 The Mini-Mill Pattern", body: "US Steel didn't die to better steel. It died to mini-mill operators who built from scratch with better economics. Incumbents' infrastructure became anchors not advantages. AI-era equivalent: company that builds on trust stack from day one competes on AUDITABILITY, not features. When the dusk moment hits, every CIO asks 'can you prove your trust model?' Old gods can't. New entrant can. Game over. New gods build native. Old gods can't retrofit.", tag: "decision", color: 5, pinned: true, section: "Industrialization", x: 80, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "adv001", title: "⚔ Against #1 — Zero Trust = Paralysis", body: "Absolute zero trust is a regress terminating in solipsism. Every system requires baseline trust anchors to function — you trust hardware, silicon physics, electromagnetism. The principle states the problem but doesn't say where to plant trust anchors. Taken literally, nothing can execute. The real question isn't zero trust, it's: what is the minimal trust surface you're willing to accept?", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv002", title: "⚔ Against #2 — Misalignment is Overstated", body: "Much code does exactly what it was intended to do. Compilers are faithful in the vast majority of cases. Treating misalignment as universal risks crying wolf — you spend so much energy on verification you can't ship. Also, some misalignment is productive: emergent behavior, happy accidents, serendipity. The principle conflates 'always possible' with 'always present.'", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv003", title: "⚔ Against #3 — Delegation Works", body: "Delegation has worked for millennia. Civilizations, armies, corporations are delegation machines. The handoff is lossy, but humans developed robust mechanisms: contracts, standards, training, culture, feedback loops. Framing delegation as inherently broken ignores that functional-enough delegation is the foundation of all organized human activity.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv004", title: "⚔ Against #4 — Verification Does Work", body: "Pre-agreed contracts and observable criteria exist and work: tests, type systems, formal verification, acceptance criteria. The principle implies verification is futile, but layered verification catches the vast majority of meaningful errors. Perfect verification is impossible, but 'good enough' is the entire basis of engineering.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 1700, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv005", title: "⚔ Against #5 — Unsolvable ≠ Useful", body: "Negative-space verification is theoretically impossible for Turing-complete systems — the halting problem makes exhaustive behavior enumeration undecidable. This principle defines an unsolvable problem and calls it a requirement. Intellectually honest, operationally useless. If you can't solve it, what are you actually proposing?", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv006", title: "⚔ Against #6 — Physical Isn't Different", body: "You never observe physics directly either — you observe instruments, which are themselves physical systems subject to error. The thermometer could be wrong. The bridge could be failing invisibly. The digital/physical divide isn't as clean as claimed — it's a difference of degree, not kind. All observation is mediated.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 620, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv007", title: "⚔ Against #7 — Probabilistic Security Works", body: "Every security framework acknowledges incomplete threat models — that's why defense in depth exists. The 'bet' framing makes security sound reckless, but probabilistic security is the standard operating procedure for every secure system ever built. Imperfect threat models are not the same as useless threat models.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 1160, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv008", title: "⚔ Against #8 — Discovery Methods Exist", body: "'Only test for known vulnerabilities' is true but misleading. Bug bounties, fuzzing, red teams, formal methods DO discover unknown vulnerabilities. Chaos engineering actively searches for unknown failure modes. The principle conflates 'can't prove absence of all bugs' with 'can't meaningfully reduce risk' — which is demonstrably false.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 1700, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv009", title: "⚔ Against #9 — Hardware Breaks Symmetry", body: "The guard being 'same material' ignores hardware security modules, TEEs, secure enclaves, TPMs, air gaps — enforcement mechanisms designed to create asymmetry between guard and guarded. The principle is true for pure software but ignores decades of engineering building physical trust anchors into digital systems.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 80, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv010", title: "⚔ Against #10 — Out-of-Band Monitoring Exists", body: "External audits, independent logging systems, canary tokens, out-of-band monitoring, immutable append-only logs — all exist specifically to create feedback channels outside the compromised system. The principle assumes monolithic architecture and ignores defense-in-depth monitoring strategies that have proven effective.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 620, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv011", title: "⚔ Against #11 — Standards Achieve Fidelity", body: "HTTP, TCP/IP, protobuf, JSON Schema, OpenAPI — these ARE shared protocols that achieve remarkable fidelity across systems. The principle overstates translation lossiness. Well-specified protocols achieve near-perfect coherence for their defined domains. The internet itself is proof that protocol translation can work at massive scale.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 1160, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv012", title: "⚔ Against #12 — Containers Solve This", body: "Containerization, IaC, deterministic builds, reproducible environments — the industry spent enormous effort making the operatum reproducible. Docker, Nix, WASM exist precisely to neutralize this problem. The principle is valid in theory but ignores decades of engineering aimed directly at solving it.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 1700, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv013", title: "⚔ Against #13 — Provenance is Irrelevant if Verifiable", body: "If the output is verifiable — code passes all tests, meets all specs, formally proven correct — does it matter what the intelligence is? A parrot that writes correct code is as good as a senior engineer. The provenance concern might be a category error IF you have sufficient verification. (Though #4–6 challenge that 'if.')", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 80, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv014", title: "⚔ Against #14 — Not Novel, Already Managed", body: "Every tool has a maker with interests. Your compiler was built by a company. Your OS has a vendor. Your IDE has incentives. This has ALWAYS been true. We've managed through open source, standards bodies, competition, regulation, audit. Provider allegiance isn't a new problem — it's the oldest problem in supply chains, and we have mature frameworks for it.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 620, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv015", title: "⚔ Against #15 — Self-Defeating Framework", body: "The claim 'no path to a trusted artifact' is self-defeating — if true, THESE VERY PRINCIPLES can't be trusted either. The framework undermines itself. Also, probabilistic trust has always been sufficient for functioning societies. We never had perfect trust. We've always operated on 'good enough' and built civilization anyway. The principle mistakes 'imperfect' for 'impossible.'", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 1160, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv016", title: "⚔ Against #16 — Review Has Real Value", body: "Calling code review a 'comfort ritual' insults every engineer who has caught real bugs in review. Review works — imperfectly, but meaningfully. Studies show code review catches 60–90% of defects before production. The principle confuses 'not perfect' with 'not valuable' — a false equivalence that undermines proven engineering practice.", tag: "blocker", color: 2, pinned: false, section: "Adversary Analysis", x: 1700, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "reb001", title: "🔥 Rebuttal #1 — Show Me The Mechanism", body: "Adversary said 'trust anchors exist.' Rebuttal: show me the mechanism. Brick strength is validated by physics — subjectively true, independently verifiable. Digital systems have no equivalent. Windows killed itself with a bad CrowdStrike update. Unix says 'you're on your own.' The trust anchor being cited doesn't exist in digital systems. The adversary was hand-waving at physics while defending software.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb002", title: "🔥 Rebuttal #2 — Who's On First", body: "Adversary misread the principle. Intent alignment is between two intelligences, not between code and output. Compilers being faithful is irrelevant — the question is whether two minds agree on what should be built. If intent isn't aligned, shipping faster just ships misalignment faster. The Who's on First joke is literally the problem statement.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb003", title: "🔥 Rebuttal #3–4 — Where Are They Now?", body: "Adversary cited contracts, standards, feedback loops from the analog world. Rebuttal: where are these in the current AI agent digital world? They don't exist yet. The mitigations cited belong to a pre-AI paradigm. No one has built the equivalent institutional infrastructure for agent-to-agent delegation, AI-assisted workflows, or model-generated artifacts.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb005", title: "🔥 Rebuttal #5 — LLMs Do This Daily", body: "Adversary called scope integrity 'theoretically impossible, operationally useless.' Rebuttal: LLMs literally add unrequested code every day — extra error handling, logging, refactors, dependency additions. This isn't theoretical. It's the daily lived experience of every developer using AI tools. The 'unsolvable problem' is actively happening in every AI-assisted codebase.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 1700, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb006", title: "🔥 Rebuttal #6 — Institutions, Not Philosophy", body: "Adversary said physical observation is also mediated. Rebuttal: that's why we have NIST, ASTM, calibration agencies, standards bodies. The physical world BUILT THE INSTITUTIONS to make observation trustworthy. The digital world hasn't built equivalent institutions. The difference isn't philosophical — it's institutional. We solved this for physics. We haven't for software.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb007", title: "🔥 Rebuttal #7 — Unknown Skill Origins", body: "Adversary said defense in depth works. Rebuttal: you're trusting an AI agent using skills whose origin you don't know. The skill could come from anywhere, with any intent baked in. The user has no audit trail, no provenance chain, no way to verify what the skill actually does vs what it claims. Defense in depth means nothing if the first layer is opaque.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 620, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb008", title: "🔥 Rebuttal #8 — Delegation All The Way Down", body: "Adversary cited bug bounties, fuzzing, red teams, formal methods. Rebuttal: every one of these is additional delegation — more people, more tools, more trust assumptions. Not intrinsic properties of the system. You're solving the trust problem by adding more things to trust. It's turtles all the way down.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 1160, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb009", title: "🔥 Rebuttal #9 — CrowdStrike Says Hello", body: "Adversary cited HSMs and TEEs. Rebuttal: where were they when one race condition in a CrowdStrike update brought down global infrastructure for 16 hours? The mitigations exist in theory, in labs, in high-security contexts. They weren't present where it mattered. The gap between what's possible and what's deployed is the actual attack surface.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 1700, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb010", title: "🔥 Rebuttal #10 — Nobody Actually Does It", body: "Adversary cited out-of-band monitoring, canary tokens, external audits. Rebuttal: if people actually set it up. They rarely do. Individual systems, small teams, startups, solo developers — the vast majority of the software world operates without any of these. The mitigation exists in security conference slides, not in production systems.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 80, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb011", title: "🔥 Rebuttal #11 — YAML vs JSON Is Proof", body: "Adversary said standards achieve fidelity. Rebuttal: YAML to JSON is translatable but the intent model differs. YAML defines OR semantics, JSON defines AND. Comments are lost. Permissiveness vs rigidity. You get syntactic fidelity while losing semantic intent. This is exactly the protocol translation problem — the data crosses the boundary but the meaning doesn't.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 620, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb012", title: "🔥 Rebuttal #12 — Docker Is Capitulation", body: "Adversary said containers solve operatum divergence. Rebuttal: Docker IS the embodiment of the problem. 'I can't make environments consistent so I'll ship the whole environment' is throwing hands in the air. It's capitulation dressed as engineering. You didn't solve divergence — you isolated it and called it a feature.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 1160, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb013", title: "🔥 Rebuttal #13–14 — Who Takes Responsibility?", body: "Adversary asked 'does provenance matter if verifiable?' Rebuttal: the real question is who takes responsibility. Verification doesn't assign accountability. When AI-generated code fails in production — who's on the hook? Not the model. Not the provider. Not the tool. The developer who typed LGTM? The entire chain of accountability is broken.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 1700, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb015", title: "🔥 Rebuttal #15 — Self-Reference Is The Point", body: "Adversary said the framework is self-defeating. Rebuttal: yes, that IS the point. If there's no trust model — or a non-trust model that becomes consensus — there's no basis for believing anything. Actions become zero-sum games. The self-reference isn't a logical flaw. It's the most honest possible conclusion about the state of digital trust.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 80, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb016", title: "🔥 Rebuttal #16 — LGTM.", body: "LGTM?\n\nFor real?\n\nThe most common code review response in the industry is four letters that mean 'I didn't really look.' That's not adversary analysis. That's the entire case for the principle, made in a single acronym.", tag: "action", color: 1, pinned: false, section: "Rebuttals", x: 620, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "principle017", title: "Context — The Civilizational Trust Erosion", body: "Overarching observation, not a problem to solve here. The internet and modern civilization were built on implicit trust in humanity — good faith assumed by default. Each technological wave erodes it: pre-internet (friction as barrier), post-internet (identity forgeable), post-social media (good faith exploited), post-LLM (genuine thought indistinguishable from pattern completion). This is the backdrop Principles 1–16 operate within. We note it, we don't try to fix it. Our scope is the practical trust problem in digital work and delegation.", tag: "note", color: 0, pinned: false, section: "Principles", x: 80, y: 2720, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "principle018", title: "Principle #17 — The Intent Collapse", body: "Misaligned intent compounds. Today's models generate code with slight drift — extra scope, undeclared behavior. That code ships, enters codebases, gets committed to GitHub, becomes training corpus. Next-generation models train on accumulated misalignment. The clean signal — what faithfully translated intent looks like — dilutes every cycle. This isn't model collapse (statistical degradation). This is intent collapse: the meaning of 'correct execution' itself degrades because the training set IS the accumulated output of unfaithful translations. The contamination is invisible because drifted code looks correct, passes tests, gets LGTM'd. And you can't go back to clean — there's no filter to separate faithful from drifted. The trust problem isn't static. It's degenerative. Every day without intent fidelity infrastructure, the baseline decays further, making future trust infrastructure less effective because there's no clean reference to calibrate against.", tag: "blocker", color: 2, pinned: true, section: "Principles", x: 620, y: 2720, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "principle019", title: "Principle #18 — The Intent Protocol Void", body: "'I want an adder. What do you give me?' No existing framework, protocol, or verification mechanism handles intent directly. Tests verify expected behavior — not unexpected behavior. Types verify shape — not meaning. Formal methods verify specified properties — not unspecified ones. Specs define interfaces — not intent. Code review verifies human judgment — which is itself unreliable. Agent protocols (MCP, etc.) define how to invoke — not what should happen. Every mechanism verifies something ADJACENT to intent but never intent itself. The gap between 'what I meant' and 'every existing verification tool' is the fundamental void. Not an edge case. The default. Every interaction between delegator and operator falls into this gap. In the human world, shared context and social accountability papered over it. In the AI world, those papers are gone.", tag: "blocker", color: 2, pinned: true, section: "Principles", x: 1160, y: 2720, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "meta001", title: "🪞 Meta — The Framework Is Its Own Case Study", body: "This board was co-created by a human and an AI — the exact scenario Principle #15 describes. The reader is already inside the trust problem the framework identifies. They're reading principles about untrust partly generated by an intelligence whose provenance (#13) and allegiance (#14) they can't verify, formatted by a tool whose implicit trust model (#16) they never examined. Every point on this board sounds reasonable. Every principle, adversary point, and rebuttal. But which parts represent genuine insight and which are sophisticated pattern completion? The reader can't tell. The authors can't tell. The framework is the territory, not just the map.", tag: "question", color: 5, pinned: true, section: "Meta", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "meta002", title: "🪞 Meta — Trust Erosion Timeline", body: "Before internet: can't trust identity, but friction = natural barrier.\nAfter internet: can't trust if human or bot, but assumed good faith.\nAfter social media: good faith became the attack surface.\nAfter LLM: can't trust if words/opinions are genuine thought or pattern-matched plausibility.\n\nEach layer removed a trust signal that the previous layer relied on. The internet assumed benevolence. Social media monetized its absence. LLMs made the signal itself indistinguishable from noise. We are left with no reliable trust signal at any layer of human interaction.", tag: "question", color: 5, pinned: true, section: "Meta", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "meta003", title: "🪞 Meta — The Diagnostic Gap", body: "Bystander observation: this framework is purely diagnostic. It tells you everything that's broken but proposes no fire extinguisher. What's the minimum viable trust model? What would a digital NIST for AI artifacts look like? Who builds the institutions? The framework correctly identifies the house is on fire. It doesn't say what to do next. That may be honest — or it may be the most important missing piece.", tag: "question", color: 4, pinned: true, section: "Meta", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "meta004", title: "🪞 Meta — The Accountability Bomb", body: "The unexplored critical question: who is legally, financially, and morally responsible when AI-generated work fails? The developer is liable for code they didn't write, can't fully understand, generated by a model they can't audit, from a provider not aligned to them. Courts haven't decided. Insurance doesn't cover it. Employment contracts don't address it. This is where principles stop being intellectual exercise and become urgent policy questions.", tag: "blocker", color: 2, pinned: true, section: "Meta", x: 1700, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "meta005", title: "🪞 Meta — When They Ask 'Who Saw This Coming'", body: "Bystander verdict: this is the most coherent articulation of why the AI tooling moment feels uneasy to thoughtful practitioners. The feeling that 'something is off' about LGTM-ing AI code — this gives that feeling structure and language. It won't slow the industry. But it might be what people point to when the first major AI-code-induced catastrophe happens and everyone asks 'why didn't anyone see this coming?' Someone did. It's on this board.", tag: "idea", color: 0, pinned: true, section: "Meta", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "adv2_01", title: "⚔ R2 #1 — Framework is Unfalsifiable", body: "The 18 principles are constructed so any evidence confirms them. Success? 'Just hasn't failed yet.' Failure? 'See, told you.' Mitigations? 'More delegation.' This is conspiracy thinking, not engineering. A framework that can't be disproven by any possible evidence isn't rigorous — it's theology.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_02", title: "⚔ R2 #2 — Reverse Survivorship Bias", body: "Billions of successful delegations happen daily. ATMs, flights, deploys, transactions. The framework only sees crashes and concludes flight is impossible while millions of planes land safely. That's reverse survivorship bias.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_03", title: "⚔ R2 #3 — Proves Too Much", body: "If all 18 are true simultaneously, no complex system should work. Ever. But they do. Internet, finance, aviation, supply chains. Either principles are overstated or the framework is missing why things work despite theory. A model of trust must explain both failure AND function.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_04", title: "⚔ R2 #4 — Theoretical ≠ Practical Risk", body: "Principles treat theoretical possibility as practical probability. 'Compromised system indistinguishable from healthy' is theoretically true but practically rare. Most breaches detected. Most malware caught. Framework never quantifies risk. Without probability, it's not actionable engineering.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 1700, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_05", title: "⚔ R2 #5 — Adder Proves Nothing", body: "Ambiguity in natural language is a known solved problem. Requirements engineering, user stories, BDD, DDD — entire disciplines disambiguate intent. Pointing at an ambiguous sentence and declaring intent impossible is like citing a typo to prove communication impossible.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_06", title: "⚔ R2 #6 — OpenClaw is Cherry-Picked", body: "Using the most reckless experimental project to indict all AI tooling is like using a homemade go-kart to prove automotive engineering broken. Mature tools have security reviews, sandboxing, permissions, audit trails. Worst case isn't representative.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 620, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_07", title: "⚔ R2 #7 — Intent Collapse Undemonstrated", body: "Where's the evidence AI code degrades training? Providers filter data. Benchmarks show improvement. Model collapse demonstrated in narrow synthetic settings only. Asserting a feedback loop you can't measure and haven't measured.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 1160, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_08", title: "⚔ R2 #8 — Framework is Self-Serving", body: "Who benefits from 'nothing is trustworthy'? The person selling trust infrastructure. L++ is positioned as the solution to a problem these principles define. Principles aren't objective — they're the sales pitch. Would you arrive at these 18 if you hadn't already built L++?", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 1700, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_09", title: "⚔ R2 #9 — Provider Allegiance Applies to You", body: "If every tool carries maker's intent, L++ carries yours. Your threat model in the blueprints. Your assumptions about determinism and hermetic compute. You haven't eliminated Principle #14 — just moved it to a different provider.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 80, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_10", title: "⚔ R2 #10 — LGTM Critique is Elitist", body: "Dismissing code review because some write LGTM is like dismissing medicine because some doctors are negligent. Rigorous review at Google/Meta/Stripe catches critical bugs daily. Generalizing from worst practice to condemn the entire practice is intellectually dishonest.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 620, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_11", title: "⚔ R2 #11 — No Operational Thresholds", body: "Every principle identifies a gap but never defines acceptable limits. What trust is enough? How imperfect can verification be? What alignment is 'good enough'? Without thresholds these are philosophical observations, not engineering tools. You can't build with them.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 1160, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_12", title: "⚔ R2 #12 — Civilizational Framing Kills Credibility", body: "Escalating from 'code review has limits' to 'civilization is collapsing' and Warhammer chaos gods makes the framework easy to dismiss. Serious security stays specific: CVEs, attack surfaces, quantified exploits. Drama trades credibility for attention.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 1700, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "adv2_13", title: "⚔ R2 #13 — Ignoring Economic Equilibrium", body: "Markets self-correct. Breaches cause lawsuits, fines, lost customers. Insurance prices risk. Regulation follows catastrophe. Trust is solved iteratively through economic incentive. Messy but functional. Seatbelts WERE eventually mandated. The system works.", tag: "blocker", color: 2, pinned: false, section: "Adversary Round 2", x: 80, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+
+  { id: "reb2_01", title: "🔥 R2 Reb #1 — They're Scoping Requirements", body: "Java's compiler enforcing security within JVM scope IS Principle #9 working within bounds. Principles aren't unfalsifiable — they're boundary conditions. Each one points at a constraint that needs to exist. Falsify them by providing a bounded system that addresses them. That's the whole point.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 80, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_02", title: "🔥 R2 Reb #2 — Success PROVES the Principles", body: "Those successful delegations work BECAUSE they have trust systems with enforcement and consequences. Banking has regulation, audits, FDIC. Aviation has FAA, NTSB, mandatory reporting. Successes prove what happens when you build the trust infrastructure the principles demand. Software hasn't built equivalent. And failures are reaching consumers faster with every iteration.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 620, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_03", title: "🔥 R2 Reb #3 — It's a Threat Model, Not Nihilism", body: "Framework doesn't claim nothing can work. It claims nothing works without addressing these constraints. The 18 principles are a specification, not a death sentence. Several contain their own solution hints — enforcement (#9), reporting (#10), scope bounding (#5). Reading them as nihilism is a choice. Reading them as engineering requirements is the intended use.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 1160, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_04", title: "🔥 R2 Reb #4 — OpenClaw Is Production Proof", body: "230 malicious skills. 26% of 31K skills vulnerable. CrowdStrike taking down global infra. Agent exfiltration in production. White-font exploit gaming AI grading systems. These aren't theoretical. They're CVEs, incident reports, and SEC filings. The practical evidence was provided throughout this conversation.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 1700, y: 80, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_05", title: "🔥 R2 Reb #5 — Adder Is The Lower Bound", body: "Fine: 'Client wants an API wrapper for Postgres to provide schematic interactions.' Now deal with schema introspection, read/write permissions, connection pooling, query sanitization, migrations, multi-tenancy. If the simplest case proves misalignment exists, complex cases don't scale linearly — they scale exponentially. The adder wasn't the argument. It was the floor.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 80, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_06", title: "🔥 R2 Reb #6 — The Entire Ecosystem", body: "Not just OpenClaw. MCP servers. Prompt templates. Education systems using LLMs for grading. White-font exploits gaming AI publication review. Agent platforms multiplying weekly. The SAME architectural blind spots everywhere. OpenClaw just went viral fast enough to make the pattern visible. It's not the outlier — it's the canary.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 620, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_07", title: "🔥 R2 Reb #7 — IEEE Spectrum Says Hello", body: "IEEE Spectrum report: AI coding quality is degrading. spectrum.ieee.org/ai-coding-degrades. The evidence exists. The adversary was either ignorant of it or hoping the other side hadn't done homework. That's the worst kind of argument — one that depends on the opponent not having receipts.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 1160, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_08", title: "🔥 R2 Reb #8 — Zero Trust Benefits Everyone", body: "Starting from zero trust to build a constrained system benefits anyone using that system. It's not self-serving — it's necessary when supply chain attacks are everywhere. L++ isn't 'trust me instead.' It's 'here's a logic frame, build your own if you want.' Open architecture, not a product pitch.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 1700, y: 740, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_09", title: "🔥 R2 Reb #9 — Agreed. Don't Trust L++ Either.", body: "Full agreement: you should not trust L++ or its creator. The goal isn't to be the trusted provider. It's to demonstrate that SOME logic frame is necessary and zero trust is the starting position. Anyone can build their own. The honest positioning is: this is a thought experiment proving a category needs to exist, not a product claiming to be the answer.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 80, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_10", title: "🔥 R2 Reb #10 — Systemic Intelligence Crunch", body: "LGTM isn't lazy developers. It's the inevitable output of a system where market pushes to ship, company forced to ship, dev forced to ship. Microsoft officially broke every service in latest update. Anthropic building compilers with compilers compiled by compilers. No time to review isn't negligence — it's the systemic condition. Blaming practitioners for a systemic failure IS the elitist move.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 620, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_11", title: "🔥 R2 Reb #11 — Accepted. This Is The Work.", body: "Agreed. The 18 principles establish the challenging reality. Defining operational thresholds is the work for engineers building within this framework. That's not a weakness — it's the explicit handoff point between diagnosis and design. The principles are the territory. The boundaries are the engineering.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 1160, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_12", title: "🔥 R2 Reb #12 — Already Removed From Board", body: "Civilizational framing and Tzeentch were explicitly marked as opinions, not principles. Already removed from the design scope. Attacking a position already disclaimed is bad form. The board has 18 technical principles, not civilizational philosophy.", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 1700, y: 1400, createdAt: Date.now(), updatedAt: Date.now() },
+  { id: "reb2_13", title: "🔥 R2 Reb #13 — Markets Optimize Profit, Not Safety", body: "Market 'self-correction' ignores irreversible damage. People lose houses, livelihoods, never recover. Insurance bankrupts, premiums rise beyond reach. The 'correction' takes decades ignoring inflation. Market incentive is PROFIT, not equilibrium, not collective good. Market intent ≠ society intent ≠ social good. That misalignment is Principle #2 at civilizational scale. Seatbelts took 83 years — how many died in the meantime?", tag: "action", color: 1, pinned: false, section: "Rebuttals Round 2", x: 80, y: 2060, createdAt: Date.now(), updatedAt: Date.now() },
+];
+
+const SEED_LINKS = [
+  { id: "link001", from: "principle001", to: "principle002", label: "leads to" },
+  { id: "link002", from: "principle002", to: "principle003", label: "generalizes into" },
+  { id: "link003", from: "principle003", to: "principle004", label: "raises" },
+  { id: "link004", from: "principle004", to: "principle005", label: "doesn't cover" },
+  { id: "link005", from: "principle005", to: "principle006", label: "grounded by" },
+  { id: "link006", from: "principle006", to: "principle007", label: "applies to" },
+  { id: "link007", from: "principle007", to: "principle008", label: "even if solved" },
+  { id: "link008", from: "principle008", to: "principle009", label: "even if solved" },
+  { id: "link009", from: "principle009", to: "principle010", label: "and when it fails" },
+  { id: "link010", from: "principle003", to: "principle011", label: "across systems" },
+  { id: "link011", from: "principle011", to: "principle012", label: "even if coherent" },
+  { id: "link012", from: "principle006", to: "principle012", label: "no shared ground" },
+  { id: "link013", from: "principle003", to: "principle013", label: "who is the operator?" },
+  { id: "link014", from: "principle013", to: "principle014", label: "and who controls them?" },
+  { id: "link015", from: "principle014", to: "principle007", label: "redefines threat model" },
+  { id: "link016", from: "principle012", to: "principle013", label: "substrate includes provider" },
+  { id: "link017", from: "principle014", to: "principle015", label: "so who do you trust?" },
+  { id: "link018", from: "principle015", to: "principle001", label: "loops back — zero trust is reality" },
+  { id: "link019", from: "principle002", to: "principle015", label: "human work also drifts" },
+  { id: "link020", from: "principle015", to: "principle016", label: "and the tools encode this" },
+  { id: "link021", from: "principle016", to: "principle004", label: "review ≠ verification" },
+  { id: "link022", from: "principle016", to: "principle014", label: "tools carry provider intent" },
+  { id: "advlink01", from: "adv001", to: "adv002", label: "and if trust exists..." },
+  { id: "advlink02", from: "adv002", to: "adv003", label: "then delegation..." },
+  { id: "advlink03", from: "adv003", to: "adv004", label: "with verification..." },
+  { id: "advlink04", from: "adv004", to: "adv005", label: "but scope is..." },
+  { id: "advlink05", from: "adv005", to: "adv006", label: "and grounding..." },
+  { id: "advlink06", from: "adv006", to: "adv007", label: "so security..." },
+  { id: "advlink07", from: "adv007", to: "adv008", label: "can be evaluated..." },
+  { id: "advlink08", from: "adv008", to: "adv009", label: "and enforced..." },
+  { id: "advlink09", from: "adv009", to: "adv010", label: "with monitoring..." },
+  { id: "advlink10", from: "adv011", to: "adv012", label: "and contained..." },
+  { id: "advlink11", from: "adv012", to: "adv013", label: "making provenance..." },
+  { id: "advlink12", from: "adv013", to: "adv014", label: "and allegiance..." },
+  { id: "advlink13", from: "adv014", to: "adv015", label: "so trust is..." },
+  { id: "advlink14", from: "adv015", to: "adv016", label: "and review has..." },
+  { id: "advlink15", from: "adv004", to: "adv013", label: "verification makes provenance moot?" },
+  { id: "reblink01", from: "reb001", to: "reb002", label: "and the real gap is..." },
+  { id: "reblink02", from: "reb002", to: "reb003", label: "which means..." },
+  { id: "reblink03", from: "reb003", to: "reb005", label: "and in practice..." },
+  { id: "reblink04", from: "reb005", to: "reb006", label: "no institution covers this" },
+  { id: "reblink05", from: "reb006", to: "reb007", label: "so skills are opaque" },
+  { id: "reblink06", from: "reb007", to: "reb008", label: "fixes are more delegation" },
+  { id: "reblink07", from: "reb008", to: "reb009", label: "and theory ≠ deployed" },
+  { id: "reblink08", from: "reb009", to: "reb010", label: "because nobody sets it up" },
+  { id: "reblink09", from: "reb011", to: "reb012", label: "and containers are surrender" },
+  { id: "reblink10", from: "reb012", to: "reb013", label: "leaving no accountability" },
+  { id: "reblink11", from: "reb013", to: "reb015", label: "which is the point" },
+  { id: "reblink12", from: "reb015", to: "reb016", label: "LGTM." },
+  { id: "link023", from: "principle015", to: "principle017", label: "trust of what?" },
+  { id: "link024", from: "principle017", to: "principle001", label: "the final loop" },
+  { id: "link025", from: "principle016", to: "principle017", label: "tools accelerate erosion" },
+  { id: "link026", from: "principle002", to: "principle018", label: "misalignment accumulates" },
+  { id: "link027", from: "principle005", to: "principle018", label: "extra scope becomes training data" },
+  { id: "link028", from: "principle018", to: "principle006", label: "no clean reference left" },
+  { id: "link029", from: "principle018", to: "principle001", label: "trust degrades over time" },
+  { id: "link030", from: "principle015", to: "principle018", label: "and it gets worse" },
+  { id: "link031", from: "principle004", to: "principle019", label: "verification can't reach intent" },
+  { id: "link032", from: "principle005", to: "principle019", label: "scope check has no tool" },
+  { id: "link033", from: "principle019", to: "principle018", label: "void accelerates collapse" },
+  { id: "link034", from: "principle011", to: "principle019", label: "protocols skip intent" },
+  { id: "link035", from: "principle016", to: "principle019", label: "tools built on the void" },
+  { id: "metalink01", from: "meta001", to: "meta002", label: "proven by" },
+  { id: "metalink02", from: "meta002", to: "meta003", label: "so what now?" },
+  { id: "metalink03", from: "meta003", to: "meta004", label: "starting with" },
+  { id: "metalink04", from: "meta004", to: "meta005", label: "before it's too late" },
+  { id: "oplink01", from: "op001", to: "op002", label: "scope needs owners" },
+  { id: "oplink02", from: "op002", to: "op003", label: "enforced by architecture" },
+  { id: "oplink03", from: "op003", to: "op004", label: "monitored independently" },
+  { id: "oplink04", from: "op005", to: "op006", label: "intent chain verified" },
+  { id: "oplink05", from: "op005", to: "op001", label: "intent defines scope" },
+  { id: "oplink06", from: "op006", to: "op004", label: "violations reported" },
+  { id: "oplink07", from: "op007", to: "op005", label: "contract = enforcement" },
+  { id: "oplink08", from: "op007", to: "op006", label: "contract = enforcement" },
+  { id: "oplink09", from: "op007", to: "op003", label: "architecture enforces" },
+  { id: "oplink10", from: "op008", to: "op005", label: "replay verifies intent" },
+  { id: "oplink11", from: "op009", to: "op002", label: "stakes bind responsibility" },
+  { id: "oplink12", from: "op010", to: "op004", label: "conformance not popularity" },
+  { id: "oplink13", from: "op011", to: "op010", label: "actions need consensus" },
+  { id: "oplink14", from: "op012", to: "op007", label: "complete stack" },
+  { id: "oplink15", from: "op012", to: "op008", label: "includes proof of work" },
+  { id: "oplink16", from: "op012", to: "op009", label: "includes proof of stake" },
+  { id: "oplink17", from: "op012", to: "op010", label: "includes consensus" },
+  { id: "oplink18", from: "op012", to: "op013", label: "enables attribution" },
+  { id: "oplink19", from: "op013", to: "op014", label: "creates fungible credits" },
+  { id: "oplink20", from: "op014", to: "op015", label: "funds safety net" },
+  { id: "oplink21", from: "op011", to: "op013", label: "reclaims commoditized value" },
+  { id: "oplink22", from: "op006", to: "op013", label: "provenance enables attribution" },
+  { id: "indlink01", from: "ind001", to: "ind002", label: "because software was..." },
+  { id: "indlink02", from: "ind002", to: "ind003", label: "until AI changed..." },
+  { id: "indlink03", from: "ind003", to: "ind004", label: "and analogs exist" },
+  { id: "indlink04", from: "ind004", to: "ind005", label: "governance solved same way" },
+  { id: "indlink05", from: "ind005", to: "ind006", label: "through this pattern" },
+  { id: "indlink06", from: "ind006", to: "ind007", label: "we're in the gap" },
+  { id: "indlink07", from: "ind003", to: "op012", label: "AI creates need for trust stack" },
+  { id: "archlink01", from: "arch001", to: "arch002", label: "floating on" },
+  { id: "archlink02", from: "arch002", to: "arch003", label: "separated by" },
+  { id: "archlink03", from: "arch003", to: "arch004", label: "still worth it" },
+  { id: "archlink04", from: "arch001", to: "arch005", label: "hardest component" },
+  { id: "archlink05", from: "arch005", to: "arch006", label: "needs these properties" },
+  { id: "archlink06", from: "arch006", to: "arch007", label: "path forward" },
+  { id: "archlink07", from: "arch007", to: "arch008", label: "but nobody else is..." },
+  { id: "archlink08", from: "arch003", to: "op012", label: "trust stack above waterline" },
+  { id: "indlink08", from: "ind007", to: "ind008", label: "and the economics are..." },
+  { id: "indlink09", from: "ind008", to: "ind009", label: "old gods built on..." },
+  { id: "indlink10", from: "ind009", to: "ind010", label: "which makes them..." },
+  { id: "indlink11", from: "ind010", to: "ind011", label: "leading to..." },
+  { id: "indlink12", from: "ind011", to: "ind012", label: "replaced by..." },
+  { id: "adv2link01", from: "adv2_01", to: "adv2_02", label: "and evidence shows..." },
+  { id: "adv2link02", from: "adv2_02", to: "adv2_03", label: "so systems work..." },
+  { id: "adv2link03", from: "adv2_03", to: "adv2_04", label: "at practical scale..." },
+  { id: "adv2link04", from: "adv2_05", to: "adv2_06", label: "and examples are..." },
+  { id: "adv2link05", from: "adv2_07", to: "adv2_08", label: "which benefits..." },
+  { id: "adv2link06", from: "adv2_08", to: "adv2_09", label: "including you..." },
+  { id: "adv2link07", from: "adv2_10", to: "adv2_11", label: "without thresholds..." },
+  { id: "adv2link08", from: "adv2_11", to: "adv2_13", label: "but markets fix it" },
+  { id: "reb2link01", from: "reb2_01", to: "reb2_02", label: "and success proves it" },
+  { id: "reb2link02", from: "reb2_02", to: "reb2_03", label: "as threat model" },
+  { id: "reb2link03", from: "reb2_03", to: "reb2_04", label: "with evidence" },
+  { id: "reb2link04", from: "reb2_05", to: "reb2_06", label: "across ecosystem" },
+  { id: "reb2link05", from: "reb2_06", to: "reb2_07", label: "with receipts" },
+  { id: "reb2link06", from: "reb2_08", to: "reb2_09", label: "don't trust it either" },
+  { id: "reb2link07", from: "reb2_10", to: "reb2_11", label: "now build" },
+  { id: "reb2link08", from: "reb2_11", to: "reb2_13", label: "markets won't save you" },
+];
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  if (diff < 60000) return "just now";
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function ScratchBoard() {
+  const [notes, setNotes] = useState([]);
+  const [links, setLinks] = useState([]);
+  const [sections, setSections] = useState(SEED_SECTIONS);
+  const [activeSection, setActiveSection] = useState("Principles");
+  const [editingId, setEditingId] = useState(null);
+  const [editingLinkId, setEditingLinkId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filterTag, setFilterTag] = useState(null);
+  const [mode, setMode] = useState("select");
+  const [connectFrom, setConnectFrom] = useState(null);
+  const [addingSection, setAddingSection] = useState(false);
+  const [newSectionName, setNewSectionName] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(0.55);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [dragId, setDragId] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [newNote, setNewNote] = useState({ title: "", body: "", tag: "note", color: 0 });
+  const [addPos, setAddPos] = useState({ x: 200, y: 200 });
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef(null);
+  const sectionInputRef = useRef(null);
+  const noteRefs = useRef({});
+
+  useEffect(() => {
+    async function load() {
+      let ln = [], ll = [];
+      try { const r = await storage.get("scratchboard:notes"); if (r) ln = JSON.parse(r.value); } catch {}
+      try { const r = await storage.get("scratchboard:links"); if (r) ll = JSON.parse(r.value); } catch {}
+      try { const r = await storage.get("scratchboard:sections"); if (r) setSections(JSON.parse(r.value)); else setSections(SEED_SECTIONS); } catch {}
+      const has = ln.some((n) => n.id === "principle001") && ln.some((n) => n.id === "principle019") && ln.some((n) => n.id === "op015") && ln.some((n) => n.id === "arch008") && ln.some((n) => n.id === "ind012") && ln.some((n) => n.id === "adv016") && ln.some((n) => n.id === "reb016") && ln.some((n) => n.id === "meta005") && ln.some((n) => n.id === "reb2_13");
+      if (!has) {
+        const ids = new Set(ln.map((n) => n.id));
+        ln = [...SEED_NOTES.filter((s) => !ids.has(s.id)), ...ln];
+        const lids = new Set(ll.map((l) => l.id));
+        ll = [...SEED_LINKS.filter((s) => !lids.has(s.id)), ...ll];
+      }
+      const seedPositions = {};
+      SEED_NOTES.forEach((s) => { seedPositions[s.id] = { x: s.x, y: s.y }; });
+      let autoIdx = 0;
+      ln = ln.map((n) => {
+        if (n.x == null || n.y == null || (n.x === 0 && n.y === 0) || isNaN(n.x) || isNaN(n.y)) {
+          if (seedPositions[n.id]) return { ...n, x: seedPositions[n.id].x, y: seedPositions[n.id].y };
+          const col = autoIdx % 4;
+          const row = Math.floor(autoIdx / 4);
+          autoIdx++;
+          return { ...n, x: 80 + col * 540, y: 80 + row * 660 };
+        }
+        return n;
+      });
+      setNotes(ln); setLinks(ll); setLoaded(true);
+    }
+    load();
+  }, []);
+
+  useEffect(() => { if (loaded) storage.set("scratchboard:notes", JSON.stringify(notes)).catch(() => {}); }, [notes, loaded]);
+  useEffect(() => { if (loaded) storage.set("scratchboard:links", JSON.stringify(links)).catch(() => {}); }, [links, loaded]);
+  useEffect(() => { if (loaded) storage.set("scratchboard:sections", JSON.stringify(sections)).catch(() => {}); }, [sections, loaded]);
+  useEffect(() => { if (addingSection && sectionInputRef.current) sectionInputRef.current.focus(); }, [addingSection]);
+
+  // Deep-link navigation: ?note=ID or ?section=NAME
+  const [highlightId, setHighlightId] = useState(null);
+  useEffect(() => {
+    if (!loaded || notes.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const noteId = params.get("note");
+    const sectionParam = params.get("section");
+    if (noteId) {
+      const target = notes.find((n) => n.id === noteId);
+      if (target) {
+        setActiveSection(target.section);
+        setHighlightId(noteId);
+        setTimeout(() => {
+          const el = noteRefs.current[noteId];
+          const w = el ? el.offsetWidth : NOTE_W;
+          const h = el ? el.offsetHeight : 200;
+          const cx = target.x + w / 2;
+          const cy = target.y + h / 2;
+          const vw = canvasRef.current?.clientWidth || 900;
+          const vh = canvasRef.current?.clientHeight || 600;
+          const nz = 0.7;
+          setPan({ x: vw / 2 - cx * nz, y: vh / 2 - cy * nz });
+          setZoom(nz);
+        }, 120);
+        setTimeout(() => setHighlightId(null), 4000);
+      }
+    } else if (sectionParam) {
+      const match = sections.find((s) => s.toLowerCase().replace(/\s+/g, "-") === sectionParam.toLowerCase() || s === sectionParam);
+      if (match) setActiveSection(match);
+    }
+  }, [loaded, notes.length]);
+
+  const sectionNotes = notes.filter((n) => n.section === activeSection)
+    .filter((n) => { if (!search) return true; const s = search.toLowerCase(); return n.title.toLowerCase().includes(s) || n.body.toLowerCase().includes(s); })
+    .filter((n) => !filterTag || n.tag === filterTag);
+
+  const snIds = new Set(sectionNotes.map((n) => n.id));
+  const sectionLinks = links.filter((l) => snIds.has(l.from) && snIds.has(l.to));
+  const sectionCounts = {}; sections.forEach((s) => { sectionCounts[s] = notes.filter((n) => n.section === s).length; });
+
+  const toCanvas = useCallback((cx, cy) => {
+    const r = canvasRef.current?.getBoundingClientRect();
+    if (!r) return { x: 0, y: 0 };
+    return { x: (cx - r.left - pan.x) / zoom, y: (cy - r.top - pan.y) / zoom };
+  }, [pan, zoom]);
+
+  const handleCanvasMouseDown = (e) => {
+    if (e.target !== canvasRef.current && !e.target.closest("[data-canvas-bg]")) return;
+    if (mode === "add") { setAddPos(toCanvas(e.clientX, e.clientY)); return; }
+    if (mode === "connect" && connectFrom) { setConnectFrom(null); return; }
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
+  const handleMouseMove = useCallback((e) => {
+    if (isPanning) setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y });
+    if (dragId) {
+      const r = canvasRef.current?.getBoundingClientRect();
+      if (r) {
+        const cx = (e.clientX - r.left - pan.x) / zoom;
+        const cy = (e.clientY - r.top - pan.y) / zoom;
+        setNotes((prev) => prev.map((n) => n.id === dragId ? { ...n, x: cx - dragOffset.x, y: cy - dragOffset.y } : n));
+      }
+    }
+    if (connectFrom) {
+      const r = canvasRef.current?.getBoundingClientRect();
+      if (r) setMousePos({ x: (e.clientX - r.left - pan.x) / zoom, y: (e.clientY - r.top - pan.y) / zoom });
+    }
+  }, [isPanning, panStart, dragId, dragOffset, zoom, pan, connectFrom]);
+
+  const handleMouseUp = useCallback(() => { setIsPanning(false); setDragId(null); }, []);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => { window.removeEventListener("mousemove", handleMouseMove); window.removeEventListener("mouseup", handleMouseUp); };
+  }, [handleMouseMove, handleMouseUp]);
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const r = canvasRef.current.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    const d = e.deltaY > 0 ? 0.92 : 1.08;
+    const nz = Math.min(3, Math.max(0.15, zoom * d));
+    const ratio = nz / zoom;
+    setPan({ x: mx - ratio * (mx - pan.x), y: my - ratio * (my - pan.y) });
+    setZoom(nz);
+  };
+
+  const handleNoteMouseDown = (e, note) => {
+    e.stopPropagation();
+    if (mode === "connect") {
+      if (!connectFrom) { setConnectFrom(note.id); }
+      else if (connectFrom !== note.id) {
+        const exists = links.some((l) => (l.from === connectFrom && l.to === note.id) || (l.from === note.id && l.to === connectFrom));
+        if (!exists) setLinks((prev) => [...prev, { id: generateId(), from: connectFrom, to: note.id, label: "" }]);
+        setConnectFrom(null);
+      }
+      return;
+    }
+    const r = canvasRef.current?.getBoundingClientRect();
+    if (r) {
+      const cx = (e.clientX - r.left - pan.x) / zoom;
+      const cy = (e.clientY - r.top - pan.y) / zoom;
+      setDragId(note.id); setDragOffset({ x: cx - note.x, y: cy - note.y });
+    }
+  };
+
+  const addNoteToBoard = () => {
+    if (!newNote.title.trim() && !newNote.body.trim()) return;
+    setNotes((prev) => [...prev, { id: generateId(), ...newNote, pinned: false, section: activeSection, x: addPos.x, y: addPos.y, createdAt: Date.now(), updatedAt: Date.now() }]);
+    setNewNote({ title: "", body: "", tag: "note", color: 0 }); setMode("select");
+  };
+
+  const updateNote = (id, u) => setNotes((prev) => prev.map((n) => n.id === id ? { ...n, ...u, updatedAt: Date.now() } : n));
+  const deleteNote = (id) => { setNotes((prev) => prev.filter((n) => n.id !== id)); setLinks((prev) => prev.filter((l) => l.from !== id && l.to !== id)); if (editingId === id) setEditingId(null); };
+  const deleteLink = (id) => { setLinks((prev) => prev.filter((l) => l.id !== id)); setEditingLinkId(null); };
+  const updateLink = (id, label) => setLinks((prev) => prev.map((l) => l.id === id ? { ...l, label } : l));
+  const addSection = () => { const name = newSectionName.trim(); if (!name || sections.includes(name)) return; setSections((prev) => [...prev, name]); setNewSectionName(""); setAddingSection(false); setActiveSection(name); };
+  const deleteSection = (name) => { if (name === "General") return; setSections((prev) => prev.filter((s) => s !== name)); setNotes((prev) => prev.map((n) => n.section === name ? { ...n, section: "General" } : n)); if (activeSection === name) setActiveSection("General"); };
+
+  const getNoteCenter = (note) => {
+    const el = noteRefs.current[note.id];
+    const w = el ? el.offsetWidth : NOTE_W;
+    const h = el ? el.offsetHeight : 160;
+    return { x: note.x + w / 2, y: note.y + h / 2 };
+  };
+
+  const resetView = () => { setPan({ x: 0, y: 0 }); setZoom(0.55); };
+  const btnBase = { background: "none", border: "none", cursor: "pointer", fontFamily: "system-ui, sans-serif" };
+
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#F8F7F4", fontFamily: "'Georgia', serif", color: "#2C2C2C", overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ padding: "14px 20px 10px", borderBottom: "1px solid #CCC8BE", background: "#FFFFFF", flexShrink: 0, boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 400, letterSpacing: "-0.02em", color: "#1A1A1A" }}>Scratch Board</h1>
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: "#666", fontFamily: "system-ui, sans-serif" }}>
+              {sectionNotes.length} note{sectionNotes.length !== 1 ? "s" : ""} · {sectionLinks.length} link{sectionLinks.length !== 1 ? "s" : ""} · {Math.round(zoom * 100)}%
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 5 }}>
+            {[
+              { key: "select", label: "↖ Select", color: "#555" },
+              { key: "connect", label: "🔗 Connect", color: "#2563EB" },
+              { key: "add", label: "＋ Note", color: "#B8860B" },
+            ].map((m) => (
+              <button key={m.key} onClick={() => { setMode(m.key); setConnectFrom(null); setEditingLinkId(null); }}
+                style={{
+                  background: mode === m.key ? (m.key === "connect" ? "#EFF6FF" : m.key === "add" ? "#FDF8ED" : "#F5F5F5") : "#FFFFFF",
+                  border: `1px solid ${mode === m.key ? m.color : "#BBB"}`,
+                  borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer", fontFamily: "system-ui, sans-serif",
+                  color: mode === m.key ? m.color : "#666", fontWeight: mode === m.key ? 600 : 500,
+                }}>{m.label}</button>
+            ))}
+            <button onClick={resetView} style={{ background: "#FFF", border: "1px solid #BBB", borderRadius: 6, padding: "6px 10px", fontSize: 11, cursor: "pointer", color: "#555", fontFamily: "system-ui, sans-serif" }}>⟲</button>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ position: "relative", flex: "1 1 160px", maxWidth: 240 }}>
+            <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, opacity: 0.5 }}>🔍</span>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..."
+              style={{ width: "100%", padding: "6px 8px 6px 26px", background: "#F8F7F4", border: "1px solid #BBB", borderRadius: 6, color: "#1A1A1A", fontSize: 11, fontFamily: "system-ui, sans-serif", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+            {TAGS.map((tag) => (
+              <button key={tag} onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+                style={{ background: filterTag === tag ? TAG_STYLES[tag].bg : "#FFF", border: `1px solid ${filterTag === tag ? TAG_STYLES[tag].text + "66" : "#CCC"}`, borderRadius: 5, padding: "3px 7px", fontSize: 10, color: filterTag === tag ? TAG_STYLES[tag].text : "#666", cursor: "pointer", fontFamily: "system-ui, sans-serif", fontWeight: 500 }}>
+                {TAG_STYLES[tag].icon} {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        {/* Sidebar */}
+        <div style={{ width: 170, minWidth: 170, borderRight: "1px solid #CCC8BE", padding: "10px 0", background: "#FFFFFF", overflowY: "auto", flexShrink: 0 }}>
+          <div style={{ padding: "0 12px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: "#777", fontFamily: "system-ui, sans-serif", fontWeight: 600 }}>Sections</span>
+            <button onClick={() => setAddingSection(true)} style={{ ...btnBase, color: "#B8860B", fontSize: 15, padding: 0, lineHeight: 1 }}>+</button>
+          </div>
+          {addingSection && (
+            <div style={{ padding: "0 8px 6px" }}>
+              <input ref={sectionInputRef} value={newSectionName} onChange={(e) => setNewSectionName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") addSection(); if (e.key === "Escape") setAddingSection(false); }}
+                onBlur={() => { if (!newSectionName.trim()) setAddingSection(false); }}
+                placeholder="Section name..."
+                style={{ width: "100%", padding: "5px 7px", background: "#F8F7F4", border: "1px solid #B8860B44", borderRadius: 5, color: "#2C2C2C", fontSize: 11, fontFamily: "system-ui, sans-serif", outline: "none", boxSizing: "border-box" }} />
+            </div>
+          )}
+          {sections.map((s) => (
+            <div key={s} onClick={() => setActiveSection(s)}
+              style={{ padding: "8px 12px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", background: activeSection === s ? "#F8F7F4" : "transparent", borderLeft: activeSection === s ? "3px solid #B8860B" : "3px solid transparent" }}
+              onMouseEnter={(e) => { if (activeSection !== s) e.currentTarget.style.background = "#FAFAF8"; }}
+              onMouseLeave={(e) => { if (activeSection !== s) e.currentTarget.style.background = "transparent"; }}>
+              <span style={{ fontSize: 12, fontFamily: "system-ui, sans-serif", color: activeSection === s ? "#0A0A0A" : "#555", fontWeight: activeSection === s ? 600 : 400 }}>{s}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 10, color: "#888", fontFamily: "system-ui, sans-serif" }}>{sectionCounts[s] || 0}</span>
+                {s !== "General" && <button onClick={(e) => { e.stopPropagation(); deleteSection(s); }} style={{ ...btnBase, color: "#CCC", fontSize: 11, padding: "0 2px" }}>×</button>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Canvas */}
+        <div ref={canvasRef} onMouseDown={handleCanvasMouseDown} onWheel={handleWheel}
+          style={{ flex: 1, position: "relative", overflow: "hidden", cursor: mode === "connect" ? "crosshair" : mode === "add" ? "cell" : isPanning ? "grabbing" : "grab", background: "#EDEAE3" }}>
+
+          <div data-canvas-bg="true" style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, #C5C0B4 1.2px, transparent 1.2px)", backgroundSize: `${28 * zoom}px ${28 * zoom}px`, backgroundPosition: `${pan.x}px ${pan.y}px` }} />
+
+          <div style={{ position: "absolute", left: 0, top: 0, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}>
+            {/* SVG links */}
+            <svg style={{ position: "absolute", left: 0, top: 0, width: 9999, height: 9999, pointerEvents: "none", overflow: "visible" }}>
+              <defs>
+                <marker id="arrowhead" viewBox="0 0 10 6" refX="10" refY="3" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 3 L 0 6 z" fill="#777" />
+                </marker>
+              </defs>
+              {sectionLinks.map((link) => {
+                const fn = sectionNotes.find((n) => n.id === link.from);
+                const tn = sectionNotes.find((n) => n.id === link.to);
+                if (!fn || !tn) return null;
+                const fc = getNoteCenter(fn), tc = getNoteCenter(tn);
+                const mx = (fc.x + tc.x) / 2, my = (fc.y + tc.y) / 2;
+                const labelLen = link.label ? link.label.length : 0;
+                return (
+                  <g key={link.id}>
+                    <line x1={fc.x} y1={fc.y} x2={tc.x} y2={tc.y} stroke={editingLinkId === link.id ? "#2563EB" : "#888"} strokeWidth={2} markerEnd="url(#arrowhead)" strokeDasharray="8 4" />
+                    <line x1={fc.x} y1={fc.y} x2={tc.x} y2={tc.y} stroke="transparent" strokeWidth={18} style={{ pointerEvents: "stroke", cursor: "pointer" }}
+                      onClick={(e) => { e.stopPropagation(); setEditingLinkId(editingLinkId === link.id ? null : link.id); setEditingId(null); }} />
+                    {link.label ? (
+                      <g transform={`translate(${mx}, ${my})`} style={{ pointerEvents: "all", cursor: "pointer" }}
+                        onClick={(e) => { e.stopPropagation(); setEditingLinkId(link.id); setEditingId(null); }}>
+                        <rect x={-labelLen * 3.2 - 12} y={-13} width={labelLen * 6.4 + 24} height={26} rx={6} fill="#FFFFFF" stroke={editingLinkId === link.id ? "#2563EB" : "#AAA"} strokeWidth={1.5} />
+                        <text textAnchor="middle" dy="4" fill={editingLinkId === link.id ? "#2563EB" : "#444"} fontSize="11" fontFamily="system-ui, sans-serif" fontWeight="500">{link.label}</text>
+                      </g>
+                    ) : (
+                      <circle cx={mx} cy={my} r={5} fill="#FFF" stroke={editingLinkId === link.id ? "#2563EB" : "#777"} strokeWidth={2}
+                        style={{ pointerEvents: "all", cursor: "pointer" }}
+                        onClick={(e) => { e.stopPropagation(); setEditingLinkId(link.id); setEditingId(null); }} />
+                    )}
+                  </g>
+                );
+              })}
+              {connectFrom && (() => {
+                const fn = sectionNotes.find((n) => n.id === connectFrom);
+                if (!fn) return null;
+                const fc = getNoteCenter(fn);
+                return <line x1={fc.x} y1={fc.y} x2={mousePos.x} y2={mousePos.y} stroke="#2563EB" strokeWidth={2} strokeDasharray="8 4" opacity={0.7} />;
+              })()}
+            </svg>
+
+            {/* Notes */}
+            {sectionNotes.map((note) => {
+              const c = COLORS[note.color] || COLORS[0];
+              const ts = TAG_STYLES[note.tag] || TAG_STYLES.note;
+              const isEditing = editingId === note.id;
+              const isCSrc = connectFrom === note.id;
+              const isHighlighted = highlightId === note.id;
+
+              return (
+                <div key={note.id} ref={(el) => { noteRefs.current[note.id] = el; }}
+                  onMouseDown={(e) => handleNoteMouseDown(e, note)}
+                  style={{
+                    position: "absolute", left: note.x, top: note.y, width: NOTE_W,
+                    background: c.bg, border: `2px solid ${isCSrc ? "#2563EB" : c.border}`,
+                    borderRadius: 10, padding: "14px 16px",
+                    cursor: mode === "connect" ? "pointer" : isEditing ? "default" : "grab",
+                    boxShadow: isHighlighted ? "0 0 0 4px #B8860B, 0 0 24px #B8860B55, 0 8px 32px rgba(0,0,0,0.25)" : isCSrc ? "0 0 0 3px #2563EB33, 0 4px 16px rgba(0,0,0,0.15)" : "0 2px 10px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08)",
+                    transition: "box-shadow 0.6s ease",
+                    borderTop: note.pinned ? "4px solid #B8860B" : `2px solid ${isCSrc ? "#2563EB" : c.border}`,
+                    userSelect: "none",
+                  }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                    <span style={{ background: ts.bg, color: ts.text, fontSize: 10, padding: "2px 7px", borderRadius: 4, fontFamily: "system-ui, sans-serif", fontWeight: 600 }}>
+                      {ts.icon} {note.tag}
+                    </span>
+                    <div style={{ display: "flex", gap: 2 }}>
+                      <button onClick={(e) => { e.stopPropagation(); updateNote(note.id, { pinned: !note.pinned }); }}
+                        style={{ ...btnBase, fontSize: 11, opacity: note.pinned ? 1 : 0.4, padding: "1px 2px" }}>📌</button>
+                      <button onClick={(e) => { e.stopPropagation(); setEditingId(isEditing ? null : note.id); setEditingLinkId(null); }}
+                        style={{ ...btnBase, fontSize: 10, opacity: 0.5, padding: "1px 2px" }}>✏️</button>
+                      <button onClick={(e) => { e.stopPropagation(); deleteNote(note.id); }}
+                        style={{ ...btnBase, fontSize: 10, opacity: 0.4, padding: "1px 2px" }}>🗑</button>
+                    </div>
+                  </div>
+
+                  {isEditing ? (
+                    <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+                      <input value={note.title} onChange={(e) => updateNote(note.id, { title: e.target.value })} placeholder="Title"
+                        style={{ width: "100%", background: "#FFFFFF", border: `1.5px solid ${c.border}`, borderRadius: 5, padding: "5px 7px", fontSize: 13, fontWeight: 600, color: "#0A0A0A", fontFamily: "'Georgia', serif", outline: "none", marginBottom: 5, boxSizing: "border-box" }} />
+                      <textarea value={note.body} onChange={(e) => updateNote(note.id, { body: e.target.value })} rows={4}
+                        style={{ width: "100%", background: "#FFFFFF", border: `1.5px solid ${c.border}`, borderRadius: 5, padding: "5px 7px", fontSize: 12, color: "#333", fontFamily: "system-ui, sans-serif", outline: "none", resize: "vertical", lineHeight: 1.5, boxSizing: "border-box" }} />
+                      <div style={{ display: "flex", gap: 2, marginTop: 6, flexWrap: "wrap" }}>
+                        {TAGS.map((t) => (
+                          <button key={t} onClick={() => updateNote(note.id, { tag: t })}
+                            style={{ background: note.tag === t ? TAG_STYLES[t].bg : "#FFF", border: `1px solid ${note.tag === t ? TAG_STYLES[t].text + "44" : "#DDD"}`, borderRadius: 3, padding: "2px 5px", fontSize: 9, cursor: "pointer" }}>
+                            {TAG_STYLES[t].icon}
+                          </button>
+                        ))}
+                        <div style={{ flex: 1 }} />
+                        {COLORS.map((col, i) => (
+                          <button key={i} onClick={() => updateNote(note.id, { color: i })}
+                            style={{ width: 16, height: 16, borderRadius: "50%", background: col.bg, border: `2px solid ${note.color === i ? col.border : "#EEE"}`, cursor: "pointer" }} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {note.title && <h3 style={{ margin: "0 0 5px", fontSize: 13, fontWeight: 700, color: "#0A0A0A", fontFamily: "'Georgia', serif", lineHeight: 1.35 }}>{note.title}</h3>}
+                      {note.body && <p style={{ margin: 0, fontSize: 11.5, color: "#333", lineHeight: 1.55, fontFamily: "system-ui, sans-serif", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 140, overflow: "hidden" }}>{note.body}</p>}
+                    </>
+                  )}
+                  <div style={{ marginTop: 6, fontSize: 9, color: "#888", fontFamily: "system-ui, sans-serif" }}>{formatDate(note.createdAt)}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Link editor */}
+          {editingLinkId && (() => {
+            const link = links.find((l) => l.id === editingLinkId);
+            if (!link) return null;
+            const fn = sectionNotes.find((n) => n.id === link.from);
+            const tn = sectionNotes.find((n) => n.id === link.to);
+            if (!fn || !tn) return null;
+            const fc = getNoteCenter(fn), tc = getNoteCenter(tn);
+            const sx = (fc.x + tc.x) / 2 * zoom + pan.x;
+            const sy = (fc.y + tc.y) / 2 * zoom + pan.y;
+            return (
+              <div style={{ position: "absolute", left: sx - 130, top: sy + 20, width: 260, background: "#FFFFFF", border: "1px solid #2563EB44", borderRadius: 10, padding: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.12)", zIndex: 200 }}
+                onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+                <div style={{ fontSize: 10, color: "#2563EB", fontFamily: "system-ui, sans-serif", marginBottom: 4, fontWeight: 600 }}>Link label</div>
+                <div style={{ fontSize: 10, color: "#AAA", fontFamily: "system-ui, sans-serif", marginBottom: 8 }}>
+                  {fn.title?.split("—")[0]?.trim() || "Note"} → {tn.title?.split("—")[0]?.trim() || "Note"}
+                </div>
+                <input value={link.label} onChange={(e) => updateLink(link.id, e.target.value)} placeholder="Describe this connection..." autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") setEditingLinkId(null); }}
+                  style={{ width: "100%", padding: "7px 9px", background: "#F8F7F4", border: "1px solid #E0DDD6", borderRadius: 6, color: "#2C2C2C", fontSize: 12, fontFamily: "system-ui, sans-serif", outline: "none", boxSizing: "border-box" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
+                  <button onClick={() => deleteLink(link.id)}
+                    style={{ background: "#FFF0F0", border: "1px solid #E8ABAB", borderRadius: 5, padding: "5px 12px", fontSize: 11, color: "#DC2626", cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>Delete</button>
+                  <button onClick={() => setEditingLinkId(null)}
+                    style={{ background: "#EFF6FF", border: "1px solid #93C5FD", borderRadius: 5, padding: "5px 14px", fontSize: 11, color: "#2563EB", cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>Done</button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Add note form */}
+          {mode === "add" && (
+            <div style={{ position: "absolute", left: addPos.x * zoom + pan.x, top: addPos.y * zoom + pan.y, width: 300, background: COLORS[newNote.color].bg, border: `1.5px solid ${COLORS[newNote.color].border}`, borderRadius: 12, padding: 18, boxShadow: "0 8px 28px rgba(0,0,0,0.12)", zIndex: 200 }}
+              onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+              <input value={newNote.title} onChange={(e) => setNewNote({ ...newNote, title: e.target.value })} placeholder="Title (optional)" autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) addNoteToBoard(); if (e.key === "Escape") setMode("select"); }}
+                style={{ width: "100%", background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "#1A1A1A", fontFamily: "'Georgia', serif", outline: "none", marginBottom: 8, boxSizing: "border-box" }} />
+              <textarea value={newNote.body} onChange={(e) => setNewNote({ ...newNote, body: e.target.value })} placeholder="Write your note..." rows={3}
+                onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) addNoteToBoard(); if (e.key === "Escape") setMode("select"); }}
+                style={{ width: "100%", background: "transparent", border: "none", fontSize: 13, color: "#555", fontFamily: "system-ui, sans-serif", outline: "none", resize: "vertical", lineHeight: 1.55, boxSizing: "border-box" }} />
+              <div style={{ display: "flex", gap: 4, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+                {COLORS.map((c, i) => (
+                  <button key={i} onClick={() => setNewNote({ ...newNote, color: i })}
+                    style={{ width: 20, height: 20, borderRadius: "50%", background: c.bg, border: `2px solid ${newNote.color === i ? c.border : "#EEE"}`, cursor: "pointer" }} />
+                ))}
+                <div style={{ width: 1, height: 16, background: "#DDD", margin: "0 4px" }} />
+                {TAGS.map((tag) => (
+                  <button key={tag} onClick={() => setNewNote({ ...newNote, tag })}
+                    style={{ background: newNote.tag === tag ? TAG_STYLES[tag].bg : "#FFF", border: `1px solid ${newNote.tag === tag ? TAG_STYLES[tag].text + "44" : "#DDD"}`, borderRadius: 4, padding: "2px 6px", fontSize: 10, cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>
+                    {TAG_STYLES[tag].icon}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+                <button onClick={() => { setMode("select"); setNewNote({ title: "", body: "", tag: "note", color: 0 }); }}
+                  style={{ ...btnBase, color: "#AAA", fontSize: 12 }}>Cancel</button>
+                <button onClick={addNoteToBoard}
+                  style={{ background: "#1A1A1A", color: "#FFF", border: "none", borderRadius: 6, padding: "7px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>Add ⌘↵</button>
+              </div>
+            </div>
+          )}
+
+          {/* Mode hints */}
+          {mode === "connect" && (
+            <div style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", background: "#2563EB", color: "#fff", padding: "7px 20px", borderRadius: 20, fontSize: 12, fontFamily: "system-ui, sans-serif", boxShadow: "0 4px 12px rgba(37,99,235,0.3)", pointerEvents: "none" }}>
+              {connectFrom ? "Click target note to complete link" : "Click a note to start connecting"}
+            </div>
+          )}
+          {mode === "add" && !newNote.title && !newNote.body && (
+            <div style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", background: "#B8860B", color: "#FFF", padding: "7px 20px", borderRadius: 20, fontSize: 12, fontFamily: "system-ui, sans-serif", fontWeight: 600, boxShadow: "0 4px 12px rgba(184,134,11,0.3)", pointerEvents: "none" }}>
+              Click anywhere on the canvas to place a note
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(ScratchBoard));
+</script>
+</body>
+</html>

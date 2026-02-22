@@ -4,11 +4,11 @@
 
 An interactive scratch board documenting 18 principles of trust in AI-assisted software development, the operational framework to address them, architectural analysis, and the industrialization thesis for software engineering.
 
-**[View Live Board →](https://rhcat.github.io/trust-model/)**
+**[View Live →](https://rhcat.github.io/trust-model/)**
 
 ## What This Is
 
-This board is the product of adversarial dialogue between a human practitioner and an AI, exploring the fundamental trust infrastructure problems that emerge when AI enters the software development lifecycle. It survived two rounds of rigorous adversarial analysis.
+This framework is the product of adversarial dialogue between a human practitioner and an AI, exploring the fundamental trust infrastructure problems that emerge when AI enters the software development lifecycle. It survived two rounds of rigorous adversarial analysis.
 
 **115 notes across 10 sections:**
 
@@ -26,43 +26,41 @@ This board is the product of adversarial dialogue between a human practitioner a
 
 ## The Core Thesis
 
-Software is entering the industrialization phase that every physical industry went through decades or centuries ago. AI didn't create the trust problem — it created the *scale* that makes the trust problem impossible to ignore. The 18 principles are the same growing pains metallurgy, construction, aerospace, and pharmaceuticals experienced during their industrialization. The solutions — standards, certification, inspection, liability — are known. Software just hasn't built them yet.
+Software is entering the industrialization phase that every physical industry went through decades or centuries ago. AI didn't create the trust problem — it created the *scale* that makes the trust problem impossible to ignore.
 
 The framework proposes: **contracts, not documentation. Enforcement, not review. Provenance, not trust.**
-
-## How to Use
-
-- **Pan**: Click and drag the canvas
-- **Zoom**: Mouse wheel / trackpad scroll
-- **Navigate**: Click sections in the left sidebar
-- **Filter**: Use tag filters or search
-- **Connect**: Use the 🔗 Connect mode to draw relationships
-- **Add**: Use the ＋ Note mode to add observations
-
-Your additions are saved to your browser's localStorage.
 
 ## Files
 
 ```
-index.html          # Self-contained static page (deploy this)
-scratch-board.jsx   # React source component (for development)
+index.html          # Cover page — narrative guide with deep links to every note
+board.html          # Interactive scratch board (pan, zoom, connect, add)
+scratch-board.jsx   # React source component (for development / Claude artifact)
 LICENSE             # Apache 2.0
 README.md           # This file
 ```
 
+## Deep Linking
+
+The board supports URL-based navigation to individual notes:
+
+```
+board.html?note=principle001    → pans to Principle #1
+board.html?note=arch003         → pans to The Waterline
+board.html?section=Meta         → opens the Meta section
+```
+
+The cover page (`index.html`) uses these deep links for every note.
+
 ## Hosting
 
-Single `index.html` — no build step, no dependencies, no server.
+No build step. No dependencies. No server.
 
-GitHub Pages: Settings → Pages → Deploy from branch (main).
+GitHub Pages: Settings → Pages → Deploy from branch (main). The `index.html` cover page is the entry point, linking into `board.html` for the interactive board.
 
 ## Related
 
 - [L++ (Logic Frame)](https://github.com/rhCat/lpp) — The blueprint execution layer
-
-## Meta
-
-This board was co-created by a human and an AI — the exact scenario Principle #15 describes. The reader is already inside the trust problem the framework identifies.
 
 ## License
 
